@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Scanner — MAISON</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#c9a96e;
+  --dark:#0a0a0a;
+  --mid:#1a1a1a;
+  --light:#f8f6f2;
+  --border:#2a2a2a;
+  --success:#2ecc71;
+  --error:#e74c3c;
+}
+body{font-family:'Montserrat',sans-serif;background:var(--dark);color:white;min-height:100vh;overflow-x:hidden;}
+
+/* ─── LOGIN ─── */
+#login-screen{
+  position:fixed;inset:0;background:var(--dark);
+  display:flex;align-items:center;justify-content:center;z-index:999;
+}
+.login-box{width:360px;padding:48px;background:var(--mid);border:1px solid var(--border);}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:26px;letter-spacing:8px;color:var(--gold);text-align:center;margin-bottom:4px;}
+.login-sub{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#555;text-align:center;margin-bottom:40px;}
+.login-box input{
+  width:100%;padding:12px 16px;background:var(--dark);border:1px solid var(--border);
+  color:white;font-family:'Montserrat',sans-serif;font-size:13px;margin-bottom:12px;outline:none;
+  transition:border 0.2s;
+}
+.login-box input:focus{border-color:var(--gold);}
+.login-box button{
+  width:100%;padding:14px;background:var(--gold);border:none;color:white;
+  font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity 0.2s;
+}
+.login-box button:hover{opacity:0.85;}
+.login-err{color:var(--error);font-size:12px;text-align:center;margin-top:12px;}
+
+/* ─── APP ─── */
+#app{display:none;min-height:100vh;}
+
+/* Header */
+.header{
+  background:var(--dark);border-bottom:1px solid var(--border);
+  padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.header-logo{font-family:'Cormorant Garamond',serif;font-size:22px;letter-spacing:6px;color:var(--gold);}
+.header-right{display:flex;align-items:center;gap:16px;}
+.header-user{font-size:11px;color:#666;letter-spacing:1px;}
+.header-logout{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#444;cursor:pointer;border:1px solid var(--border);padding:6px 12px;transition:all 0.2s;}
+.header-logout:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Pages */
+.screen{display:none;padding:32px 24px;max-width:700px;margin:0 auto;}
+.screen.active{display:block;}
+
+/* Title */
+.page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;letter-spacing:2px;margin-bottom:4px;}
+.page-sub{font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;}
+
+/* ─── SCANNER ─── */
+.scan-area{
+  background:var(--mid);border:1px solid var(--border);padding:32px;text-align:center;margin-bottom:24px;
+}
+.scan-area h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:20px;color:var(--gold);}
+
+#video-container{position:relative;width:100%;max-width:380px;margin:0 auto 20px;}
+#scanner-video{width:100%;border:2px solid var(--border);display:block;background:#000;}
+.scan-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.3) 100%);
+}
+.scan-line{
+  position:absolute;left:10%;right:10%;height:2px;
+  background:var(--gold);
+  box-shadow:0 0 8px var(--gold);
+  animation:scanLine 2s ease-in-out infinite;
+  top:50%;
+}
+@keyframes scanLine{0%,100%{top:15%;}50%{top:85%;}}
+.scan-corner{position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid;}
+.scan-corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.scan-corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.scan-corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.scan-corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+
+.scan-status{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:16px;}
+.scan-status.scanning{color:var(--gold);}
+
+/* Manuel */
+.divider{display:flex;align-items:center;gap:16px;margin:20px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.divider span{font-size:10px;letter-spacing:2px;color:#444;text-transform:uppercase;}
+
+.manual-input{display:flex;gap:8px;}
+.manual-input input{
+  flex:1;padding:12px 16px;background:var(--dark);border:1px solid var(--border);
+  color:white;font-family:'Montserrat',sans-serif;font-size:13px;outline:none;transition:border 0.2s;
+}
+.manual-input input:focus{border-color:var(--gold);}
+.manual-input input::placeholder{color:#444;}
+
+/* ─── BOUTONS ─── */
+.btn{
+  padding:12px 28px;border:1px solid white;background:transparent;
+  font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;cursor:pointer;color:white;transition:all 0.2s;
+}
+.btn:hover{background:white;color:var(--dark);}
+.btn-gold{background:var(--gold);border-color:var(--gold);}
+.btn-gold:hover{background:#b8954a;border-color:#b8954a;color:white;}
+.btn-success{background:var(--success);border-color:var(--success);}
+.btn-success:hover{opacity:0.85;color:white;}
+.btn-danger{border-color:var(--error);color:var(--error);}
+.btn-danger:hover{background:var(--error);color:white;}
+.btn-full{width:100%;}
+.btn-sm{padding:7px 16px;font-size:9px;}
+
+/* ─── FICHE COMMANDE ─── */
+#order-screen .order-header{
+  background:var(--mid);border:1px solid var(--border);padding:24px;margin-bottom:16px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;
+}
+.order-number-big{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;letter-spacing:3px;color:var(--gold);}
+.order-badge{
+  display:inline-block;padding:4px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;
+}
+.badge-paid{background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);}
+.badge-completed{background:rgba(201,169,110,0.15);color:var(--gold);border:1px solid rgba(201,169,110,0.3);}
+.badge-pending{background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid rgba(255,193,7,0.2);}
+.badge-ready{background:rgba(33,150,243,0.1);color:#42a5f5;border:1px solid rgba(33,150,243,0.2);}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.info-block{background:var(--mid);border:1px solid var(--border);padding:16px;}
+.info-block label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;display:block;margin-bottom:6px;}
+.info-block p{font-size:14px;color:#ccc;line-height:1.5;}
+
+.items-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+.items-table th{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;
+  padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;
+}
+.items-table td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;color:#aaa;vertical-align:middle;}
+.items-table tr:last-child td{border-bottom:none;}
+.item-name{color:#eee;}
+
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--mid);border:1px solid var(--border);padding:16px 12px;margin-bottom:8px;
+}
+.total-row strong{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;}
+
+.notes-block{
+  background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);
+  padding:16px;margin-bottom:16px;font-size:13px;color:#aaa;line-height:1.6;
+}
+.notes-block strong{color:var(--gold);}
+
+.already-picked{
+  background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);
+  padding:20px;text-align:center;margin-bottom:16px;
+}
+.already-picked p{color:var(--success);font-size:13px;letter-spacing:1px;}
+.already-picked small{color:#555;font-size:11px;display:block;margin-top:4px;}
+
+.action-bar{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+
+/* ─── SIGNATURE ─── */
+#signature-screen .sig-logo{
+  text-align:center;padding:32px 0 24px;
+  font-family:'Cormorant Garamond',serif;font-size:36px;letter-spacing:10px;color:var(--gold);
+}
+
+.sig-info{
+  text-align:center;margin-bottom:24px;
+  font-size:12px;color:#555;letter-spacing:1px;line-height:1.8;
+}
+.sig-info strong{color:#aaa;}
+
+.canvas-container{
+  border:2px solid var(--gold);margin-bottom:8px;position:relative;
+  background:white;
+}
+#signature-canvas{display:block;cursor:crosshair;touch-action:none;}
+
+.sig-label{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;
+  text-align:center;margin-bottom:8px;
+}
+
+.sig-sous-signe{
+  text-align:center;padding:16px;
+  font-size:13px;color:#aaa;letter-spacing:1px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  margin-top:8px;
+}
+
+.sig-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+
+/* ─── SUCCÈS ─── */
+#success-screen{text-align:center;padding:48px 24px;}
+.success-icon{font-size:64px;margin-bottom:24px;}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--gold);margin-bottom:8px;}
+.success-sub{font-size:12px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--mid);color:white;padding:14px 24px;
+  font-size:12px;letter-spacing:1px;z-index:9999;border-left:3px solid var(--gold);
+  transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:300px;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{border-left-color:var(--error);}
+.toast.success{border-left-color:var(--success);}
+
+@media(max-width:480px){
+  .info-grid{grid-template-columns:1fr;}
+  .sig-actions{grid-template-columns:1fr;}
+  .screen{padding:20px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">MAISON</div>
+    <div class="login-sub">Scanner de commandes</div>
+    <input type="email" id="login-email" placeholder="Email vendeur">
+    <input type="password" id="login-password" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Connexion</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-logo">MAISON</div>
+    <div class="header-right">
+      <div class="header-user" id="header-user"></div>
+      <div class="header-logout" onclick="logout()">Déconnexion</div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 1 : SCANNER -->
+  <div class="screen active" id="scan-screen">
+    <div class="page-title">Scanner un retrait</div>
+    <div class="page-sub">Scannez le QR code du client</div>
+
+    <div class="scan-area">
+      <h3>Caméra</h3>
+      <div id="video-container">
+        <video id="scanner-video" playsinline autoplay muted></video>
+        <div class="scan-overlay"></div>
+        <div class="scan-line"></div>
+        <div class="scan-corner tl"></div>
+        <div class="scan-corner tr"></div>
+        <div class="scan-corner bl"></div>
+        <div class="scan-corner br"></div>
+      </div>
+      <canvas id="scanner-canvas" style="display:none;"></canvas>
+      <div class="scan-status scanning" id="scan-status">En attente d'un QR code...</div>
+      <button class="btn btn-sm" onclick="startCamera()" id="start-cam-btn">Activer la caméra</button>
+    </div>
+
+    <div class="divider"><span>Ou entrez manuellement</span></div>
+
+    <div class="manual-input">
+      <input type="text" id="manual-order" placeholder="MSN-250427-XXXX" style="text-transform:uppercase;">
+      <button class="btn btn-gold" onclick="searchManual()">Rechercher</button>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 2 : FICHE COMMANDE -->
+  <div class="screen" id="order-screen">
+    <div style="margin-bottom:24px;">
+      <button class="btn btn-sm" onclick="goToScan()">← Retour scanner</button>
+    </div>
+
+    <div class="order-header" id="order-header">
+      <!-- rempli dynamiquement -->
+    </div>
+
+    <div class="info-grid" id="order-info-grid"></div>
+
+    <div id="order-notes-block"></div>
+
+    <table class="items-table">
+      <thead><tr><th>Article</th><th>Taille</th><th>Qté</th><th style="text-align:right;">Prix</th></tr></thead>
+      <tbody id="order-items-tbody"></tbody>
+    </table>
+
+    <div class="total-row">
+      <span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#555;">Total payé</span>
+      <strong id="order-total"></strong>
+    </div>
+
+    <div id="already-picked-block" style="display:none;" class="already-picked">
+      <p>✓ Colis déjà remis</p>
+      <small id="already-picked-info"></small>
+    </div>
+
+    <div class="action-bar" id="action-bar"></div>
+  </div>
+
+  <!-- ÉCRAN 3 : SIGNATURE -->
+  <div class="screen" id="signature-screen">
+    <div class="sig-logo" id="sig-logo-text">MAISON</div>
+
+    <div class="sig-info" id="sig-info">
+      Confirmation de remise — <strong id="sig-order-number"></strong>
+    </div>
+
+    <div class="sig-label">Signez dans l'encadré ci-dessous</div>
+
+    <div class="canvas-container">
+      <canvas id="signature-canvas"></canvas>
+    </div>
+
+    <div class="sig-sous-signe">
+      Je soussigné(e) <strong id="sig-client-name"></strong> déclare avoir reçu mon colis.
+    </div>
+
+    <div class="sig-actions">
+      <button class="btn btn-danger" onclick="clearSignature()">Effacer</button>
+      <button class="btn btn-success" onclick="confirmPickup()">Confirmer la remise ✓</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-sm" onclick="showScreen('order-screen')">← Retour</button>
+    </div>
+  </div>
+
+  <!-- ÉCRAN 4 : SUCCÈS -->
+  <div class="screen" id="success-screen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Remise confirmée</div>
+    <div class="success-sub">Colis remis avec succès</div>
+    <p style="color:#555;font-size:13px;margin-bottom:32px;" id="success-detail"></p>
+    <button class="btn btn-gold" onclick="goToScan()">Scanner une autre commande</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://ton-api.onrender.com'; // ← CHANGE ICI
+let token = localStorage.getItem('scan_token');
+let currentUser = null;
+let currentOrder = null;
+
+// ─── Signature Canvas ───
+let sigCanvas, sigCtx, isDrawing = false, lastX = 0, lastY = 0;
+
+function initCanvas() {
+  sigCanvas = document.getElementById('signature-canvas');
+  sigCtx = sigCanvas.getContext('2d');
+
+  const container = sigCanvas.parentElement;
+  const w = container.offsetWidth;
+  const h = Math.round(w * 0.45);
+  sigCanvas.width = w;
+  sigCanvas.height = h;
+  sigCanvas.style.width = w + 'px';
+  sigCanvas.style.height = h + 'px';
+
+  sigCtx.fillStyle = '#ffffff';
+  sigCtx.fillRect(0, 0, w, h);
+  sigCtx.strokeStyle = '#0a0a0a';
+  sigCtx.lineWidth = 2.5;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  // Mouse
+  sigCanvas.addEventListener('mousedown', e => { isDrawing = true; [lastX, lastY] = getPos(e); });
+  sigCanvas.addEventListener('mousemove', e => { if (isDrawing) draw(e); });
+  sigCanvas.addEventListener('mouseup', () => isDrawing = false);
+  sigCanvas.addEventListener('mouseleave', () => isDrawing = false);
+
+  // Touch
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing = true; [lastX, lastY] = getPos(e.touches[0]); });
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if (isDrawing) draw(e.touches[0]); });
+  sigCanvas.addEventListener('touchend', () => isDrawing = false);
+}
+
+function getPos(e) {
+  const rect = sigCanvas.getBoundingClientRect();
+  return [e.clientX - rect.left, e.clientY - rect.top];
+}
+
+function draw(e) {
+  const [x, y] = getPos(e);
+  sigCtx.beginPath();
+  sigCtx.moveTo(lastX, lastY);
+  sigCtx.lineTo(x, y);
+  sigCtx.stroke();
+  [lastX, lastY] = [x, y];
+}
+
+function clearSignature() {
+  sigCtx.fillStyle = '#ffffff';
+  sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+}
+
+function isSignatureEmpty() {
+  const data = sigCtx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) return false;
+  }
+  return true;
+}
+
+// ─── AUTH ───
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    const res = await apiFetch('/api/auth/login', 'POST', { email, password }, false);
+    const allowed = ['vendeur', 'admin', 'super_admin'];
+    if (!allowed.includes(res.user.role)) {
+      document.getElementById('login-err').textContent = 'Accès non autorisé.';
+      return;
+    }
+    token = res.token;
+    localStorage.setItem('scan_token', token);
+    currentUser = res.user;
+    initApp();
+  } catch(e) {
+    document.getElementById('login-err').textContent = e.message || 'Erreur de connexion';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('scan_token');
+  location.reload();
+}
+
+async function checkAuth() {
+  if (!token) return;
+  try {
+    currentUser = await apiFetch('/api/auth/me');
+    initApp();
+  } catch { localStorage.removeItem('scan_token'); }
+}
+
+function initApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('header-user').textContent = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.email;
+
+  // Charger le nom du site
+  apiFetch('/api/config', 'GET', null, false).then(cfg => {
+    if (cfg.site_name) {
+      document.querySelectorAll('.sig-logo').forEach(el => el.textContent = cfg.site_name);
+      document.title = `Scanner — ${cfg.site_name}`;
+    }
+  }).catch(() => {});
+
+  initCanvas();
+}
+
+// ─── API ───
+async function apiFetch(path, method='GET', body=null, withAuth=true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (withAuth && token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+  return data;
+}
+
+// ─── NAVIGATION ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goToScan() {
+  currentOrder = null;
+  showScreen('scan-screen');
+}
+
+// ─── CAMÉRA ───
+let cameraStream = null;
+let scanInterval = null;
+
+async function startCamera() {
+  document.getElementById('start-cam-btn').style.display = 'none';
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = cameraStream;
+    video.play();
+
+    scanInterval = setInterval(() => scanFrame(), 200);
+    document.getElementById('scan-status').textContent = 'Pointez la caméra vers le QR code...';
+  } catch(e) {
+    document.getElementById('scan-status').textContent = 'Caméra non disponible';
+    document.getElementById('start-cam-btn').style.display = 'inline-block';
+    document.getElementById('start-cam-btn').textContent = 'Réessayer';
+    showToast('Impossible d\'accéder à la caméra', 'error');
+  }
+}
+
+function scanFrame() {
+  const video = document.getElementById('scanner-video');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+  const canvas = document.getElementById('scanner-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+
+  if (code) {
+    clearInterval(scanInterval);
+    stopCamera();
+    processQR(code.data);
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+}
+
+function processQR(data) {
+  try {
+    const parsed = JSON.parse(data);
+    if (parsed.order_number) {
+      loadOrder(parsed.order_number);
+    } else {
+      showToast('QR code non reconnu', 'error');
+      resetScanner();
+    }
+  } catch {
+    // Essayer directement comme numéro de commande
+    if (data.startsWith('MSN-')) {
+      loadOrder(data);
+    } else {
+      showToast('QR code invalide', 'error');
+      resetScanner();
+    }
+  }
+}
+
+function resetScanner() {
+  document.getElementById('scan-status').textContent = 'En attente d\'un QR code...';
+  document.getElementById('start-cam-btn').style.display = 'inline-block';
+}
+
+// ─── RECHERCHE MANUELLE ───
+function searchManual() {
+  const val = document.getElementById('manual-order').value.trim().toUpperCase();
+  if (!val) return showToast('Entrez un numéro de commande', 'error');
+  loadOrder(val);
+}
+
+// ─── CHARGER COMMANDE ───
+async function loadOrder(orderNumber) {
+  document.getElementById('scan-status').textContent = `Chargement de ${orderNumber}...`;
+  try {
+    currentOrder = await apiFetch(`/api/orders/scan/${orderNumber}`);
+    renderOrder();
+    showScreen('order-screen');
+  } catch(e) {
+    showToast(e.message || 'Commande introuvable', 'error');
+    resetScanner();
+  }
+}
+
+function renderOrder() {
+  const o = currentOrder;
+  const items = o.items;
+
+  // Header
+  const statusLabels = { pending:'En attente', paid:'Payée ✓', ready:'Prête', completed:'Terminée', cancelled:'Annulée' };
+  document.getElementById('order-header').innerHTML = `
+    <div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:6px;">Numéro de commande</div>
+      <div class="order-number-big">${o.order_number}</div>
+      <div style="margin-top:8px;">
+        <span class="order-badge badge-${o.status}">${statusLabels[o.status] || o.status}</span>
+        <span style="margin-left:8px;font-size:11px;color:#444;">${new Date(o.created_at).toLocaleDateString('fr-FR')}</span>
+      </div>
+    </div>
+    ${o.delivery_type === 'retrait' ? '<div style="font-size:28px;">🏪</div>' : '<div style="font-size:28px;">🚚</div>'}
+  `;
+
+  // Infos client
+  document.getElementById('order-info-grid').innerHTML = `
+    <div class="info-block">
+      <label>Client</label>
+      <p>${o.customer_name}</p>
+    </div>
+    <div class="info-block">
+      <label>Email</label>
+      <p>${o.customer_email}</p>
+    </div>
+    ${o.customer_phone ? `<div class="info-block"><label>Téléphone</label><p>${o.customer_phone}</p></div>` : ''}
+    <div class="info-block">
+      <label>Mode de livraison</label>
+      <p>${o.delivery_type === 'retrait' ? 'Retrait en boutique' : 'Livraison à domicile'}</p>
+    </div>
+    ${o.paid_at ? `<div class="info-block"><label>Payée le</label><p>${new Date(o.paid_at).toLocaleString('fr-FR')}</p></div>` : ''}
+  `;
+
+  // Notes
+  document.getElementById('order-notes-block').innerHTML = o.notes
+    ? `<div class="notes-block"><strong>📝 Note client :</strong> ${o.notes}</div>`
+    : '';
+
+  // Articles
+  document.getElementById('order-items-tbody').innerHTML = items.map(i => `
+    <tr>
+      <td class="item-name">${i.name}</td>
+      <td>${i.size || '—'}</td>
+      <td style="text-align:center;">× ${i.quantity}</td>
+      <td style="text-align:right;color:#888;">€ ${(i.price * i.quantity).toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  // Total
+  document.getElementById('order-total').textContent = `€ ${parseFloat(o.total).toFixed(2)}`;
+
+  // Déjà retiré ?
+  const alreadyBlock = document.getElementById('already-picked-block');
+  if (o.already_picked_up) {
+    alreadyBlock.style.display = 'block';
+    const info = o.pickup_info;
+    document.getElementById('already-picked-info').textContent =
+      `Remis par ${info.vendeur_name} le ${new Date(info.completed_at).toLocaleString('fr-FR')}`;
+  } else {
+    alreadyBlock.style.display = 'none';
+  }
+
+  // Boutons action
+  const actionBar = document.getElementById('action-bar');
+  if (o.delivery_type === 'retrait' && !o.already_picked_up && o.status !== 'cancelled') {
+    actionBar.innerHTML = `
+      <button class="btn btn-gold" onclick="openSignature()">Confirmer la remise & Signature</button>
+      <button class="btn btn-sm" onclick="goToScan()">Annuler</button>
+    `;
+  } else if (o.delivery_type === 'livraison') {
+    actionBar.innerHTML = `
+      <div style="font-size:12px;color:#555;padding:12px;border:1px solid var(--border);">
+        ℹ️ Cette commande est en livraison à domicile — pas de retrait en boutique.
+      </div>
+    `;
+  } else {
+    actionBar.innerHTML = `<button class="btn btn-sm" onclick="goToScan()">← Retour au scanner</button>`;
+  }
+}
+
+// ─── SIGNATURE ───
+function openSignature() {
+  if (!currentOrder) return;
+
+  document.getElementById('sig-order-number').textContent = currentOrder.order_number;
+  document.getElementById('sig-client-name').textContent = currentOrder.customer_name;
+
+  // Charger le nom du site dans le logo
+  apiFetch('/api/config', 'GET', null, false).then(cfg => {
+    document.getElementById('sig-logo-text').textContent = cfg.site_name || 'MAISON';
+  }).catch(() => {});
+
+  clearSignature();
+  showScreen('signature-screen');
+}
+
+async function confirmPickup() {
+  if (isSignatureEmpty()) {
+    showToast('Le client doit signer avant de confirmer', 'error');
+    return;
+  }
+
+  const signature = sigCanvas.toDataURL('image/png');
+
+  try {
+    await apiFetch(`/api/orders/${currentOrder.id}/pickup`, 'POST', { signature });
+
+    // Succès
+    document.getElementById('success-detail').textContent =
+      `${currentOrder.customer_name} — ${currentOrder.order_number} — remis par ${currentUser.first_name || currentUser.email}`;
+
+    showScreen('success-screen');
+    showToast('Remise enregistrée avec succès !', 'success');
+  } catch(e) {
+    showToast(e.message || 'Erreur lors de la confirmation', 'error');
+  }
+}
+
+// ─── TOAST ───
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// Init
+checkAuth();
+</script>
+</body>
+</html>
