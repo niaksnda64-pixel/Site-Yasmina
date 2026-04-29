@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — MAISON</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Montserrat',sans-serif;background:#f8f6f2;color:#0a0a0a;min-height:100vh;}
+:root{--accent:#c9a96e;--primary:#0a0a0a;--light:#f8f6f2;--mid:#e8e4dc;}
+
+#login-screen{position:fixed;inset:0;background:#0a0a0a;display:flex;align-items:center;justify-content:center;z-index:999;}
+.login-box{width:380px;padding:48px;background:#1a1a1a;border:1px solid #2a2a2a;}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:28px;letter-spacing:8px;color:var(--accent);text-align:center;margin-bottom:8px;}
+.login-sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#666;text-align:center;margin-bottom:40px;}
+.login-box input{width:100%;padding:12px 16px;background:#0a0a0a;border:1px solid #2a2a2a;color:white;font-family:'Montserrat',sans-serif;font-size:13px;margin-bottom:12px;outline:none;transition:border .2s;}
+.login-box input:focus{border-color:var(--accent);}
+.login-box button{width:100%;padding:14px;background:var(--accent);border:none;color:white;font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+.login-box button:hover{opacity:.85;}
+.login-err{color:#e74c3c;font-size:12px;text-align:center;margin-top:12px;}
+
+#app{display:none;min-height:100vh;}
+.sidebar{width:220px;background:#0a0a0a;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;}
+.sidebar-logo{padding:28px 24px;border-bottom:1px solid #1a1a1a;}
+.sidebar-logo-text{font-family:'Cormorant Garamond',serif;font-size:22px;letter-spacing:6px;color:var(--accent);}
+.sidebar-role{font-size:9px;letter-spacing:2px;color:#444;text-transform:uppercase;margin-top:4px;}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto;}
+.nav-group{margin-bottom:24px;}
+.nav-group-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#333;padding:0 20px;margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#666;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{color:#ccc;background:#111;}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:#111;}
+.nav-item-icon{width:16px;text-align:center;font-size:14px;}
+.sidebar-user{padding:16px 20px;border-top:1px solid #1a1a1a;font-size:11px;color:#444;}
+.sidebar-user span{display:block;color:#888;margin-bottom:4px;font-size:11px;word-break:break-all;}
+.sidebar-logout{font-size:10px;letter-spacing:1px;color:#555;cursor:pointer;text-transform:uppercase;margin-top:8px;}
+.sidebar-logout:hover{color:var(--accent);}
+
+.main{margin-left:220px;padding:32px;min-height:100vh;}
+.page{display:none;}
+.page.active{display:block;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;letter-spacing:2px;margin-bottom:8px;}
+.page-sub{font-size:12px;color:#888;margin-bottom:32px;letter-spacing:1px;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:white;border:1px solid var(--mid);padding:20px;text-align:center;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-top:4px;}
+
+.table-wrap{background:white;border:1px solid var(--mid);overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;padding:12px 16px;border-bottom:1px solid var(--mid);text-align:left;white-space:nowrap;}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--mid);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafaf8;}
+
+.badge{display:inline-block;padding:3px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.badge-paid{background:#e8f5e9;color:#2e7d32;}
+.badge-pending{background:#fff8e1;color:#f57f17;}
+.badge-ready{background:#e3f2fd;color:#1565c0;}
+.badge-completed{background:#f3e5f5;color:#6a1b9a;}
+.badge-cancelled{background:#ffebee;color:#c62828;}
+.badge-admin{background:#0a0a0a;color:var(--accent);}
+.badge-super_admin{background:var(--accent);color:white;}
+.badge-vendeur{background:#e8f5e9;color:#2e7d32;}
+.badge-client{background:#f5f5f5;color:#666;}
+
+.btn{padding:8px 20px;border:1px solid var(--primary);background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.btn:hover{background:var(--primary);color:white;}
+.btn-gold{background:var(--accent);border-color:var(--accent);color:white;}
+.btn-gold:hover{background:#b8954a;}
+.btn-sm{padding:5px 12px;font-size:9px;}
+.btn-danger{border-color:#e74c3c;color:#e74c3c;}
+.btn-danger:hover{background:#e74c3c;color:white;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid var(--mid);background:white;font-family:'Montserrat',sans-serif;font-size:13px;outline:none;transition:border .2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-full{grid-column:1/-1;}
+
+.section-card{background:white;border:1px solid var(--mid);padding:24px;margin-bottom:20px;}
+.section-card h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--mid);}
+
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.search-input{padding:8px 14px;border:1px solid var(--mid);font-family:'Montserrat',sans-serif;font-size:13px;outline:none;flex:1;min-width:200px;}
+.search-input:focus{border-color:var(--accent);}
+select.filter-select{padding:8px 14px;border:1px solid var(--mid);font-family:'Montserrat',sans-serif;font-size:12px;outline:none;background:white;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--mid);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;}
+.modal-close{cursor:pointer;font-size:20px;color:#888;}
+.modal-body{padding:24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--mid);display:flex;justify-content:flex-end;gap:12px;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#0a0a0a;color:white;padding:14px 24px;font-size:13px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-left:3px solid #2ecc71;}
+.toast.error{border-left:3px solid #e74c3c;}
+
+.mail-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--mid);font-size:12px;margin:2px;}
+.mail-chip button{background:none;border:none;cursor:pointer;color:#888;font-size:14px;line-height:1;}
+.color-preview{width:24px;height:24px;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:8px;border:1px solid var(--mid);}
+
+.order-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.detail-block{background:#f8f6f2;padding:16px;}
+.detail-block label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;display:block;margin-bottom:4px;}
+.detail-block p{font-size:14px;}
+
+@media(max-width:768px){
+  .sidebar{width:60px;}
+  .sidebar-logo-text,.sidebar-role,.nav-group-label,.nav-item span,.sidebar-user{display:none;}
+  .nav-item{justify-content:center;padding:14px;}
+  .main{margin-left:60px;padding:16px;}
+  .form-grid{grid-template-columns:1fr;}
+  .order-detail-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">MAISON</div>
+    <div class="login-sub">Panel Administration</div>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+    <input type="password" id="login-password" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Connexion</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text" id="sidebar-site-name">MAISON</div>
+      <div class="sidebar-role" id="sidebar-role">Admin</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Dashboard</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-item-icon">📊</span><span>Vue d'ensemble</span></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Boutique</div>
+        <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-item-icon">📦</span><span>Commandes</span></div>
+        <div class="nav-item" onclick="showPage('products',this)"><span class="nav-item-icon">👗</span><span>Produits</span></div>
+        <div class="nav-item" onclick="showPage('pickups',this)"><span class="nav-item-icon">🏪</span><span>Retraits signés</span></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Clients</div>
+        <div class="nav-item" onclick="showPage('clients',this)"><span class="nav-item-icon">👤</span><span>Clients</span></div>
+        <div class="nav-item" onclick="showPage('mails',this)"><span class="nav-item-icon">✉️</span><span>Emails</span></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Paramètres</div>
+        <div class="nav-item" onclick="showPage('site',this)"><span class="nav-item-icon">🎨</span><span>Site & Design</span></div>
+        <div class="nav-item" onclick="showPage('staff',this)"><span class="nav-item-icon">👥</span><span>Équipe</span></div>
+        <div class="nav-item super-only" onclick="showPage('dev',this)" style="display:none"><span class="nav-item-icon">⚙️</span><span>Dev / API Keys</span></div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <span id="sidebar-email"></span>
+      <div class="sidebar-logout" onclick="logout()">Déconnexion</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title" id="dash-title">Bonjour 👋</div>
+      <div class="page-sub" id="dash-sub">Chargement...</div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="section-card">
+        <h3>Dernières commandes</h3>
+        <div class="table-wrap">
+          <table id="recent-orders-table">
+            <thead><tr><th>N°</th><th>Client</th><th>Total</th><th>Mode</th><th>Statut</th><th>Date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMANDES -->
+    <div class="page" id="page-orders">
+      <div class="page-title">Commandes</div>
+      <div class="page-sub">Toutes les commandes reçues</div>
+      <div class="toolbar">
+        <input class="search-input" placeholder="Rechercher n°, client, email..." oninput="filterOrders(this.value)">
+        <select class="filter-select" onchange="filterOrdersByStatus(this.value)">
+          <option value="">Tous les statuts</option>
+          <option value="pending">En attente</option>
+          <option value="paid">Payée</option>
+          <option value="ready">Prête</option>
+          <option value="completed">Terminée</option>
+          <option value="cancelled">Annulée</option>
+        </select>
+        <button class="btn btn-gold" onclick="loadOrders()">↻ Actualiser</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>N°</th><th>Client</th><th>Email</th><th>Total</th><th>Mode</th><th>Statut</th><th>Date</th><th></th></tr></thead>
+        <tbody id="orders-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- PRODUITS -->
+    <div class="page" id="page-products">
+      <div class="page-title">Produits</div>
+      <div class="page-sub">Gérer le catalogue boutique</div>
+      <div class="toolbar">
+        <button class="btn btn-gold" onclick="openProductModal()">+ Nouveau produit</button>
+        <button class="btn" onclick="loadProducts()">↻ Actualiser</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th>Tags</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="products-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- RETRAITS -->
+    <div class="page" id="page-pickups">
+      <div class="page-title">Retraits en boutique</div>
+      <div class="page-sub">Historique des remises avec signatures</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>N° Commande</th><th>Client</th><th>Vendeur</th><th>Articles</th><th>Total</th><th>Date & Heure</th><th>Signature</th></tr></thead>
+        <tbody id="pickups-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="page-title">Clients</div>
+      <div class="page-sub">Base de clients inscrits</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Inscrit le</th><th></th></tr></thead>
+        <tbody id="clients-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- EMAILS -->
+    <div class="page" id="page-mails">
+      <div class="page-title">Emails</div>
+      <div class="page-sub">Envoyer des emails aux clients</div>
+      <div class="section-card">
+        <h3>Composer un email</h3>
+        <div class="form-group">
+          <label>Destinataires</label>
+          <div id="mail-chips" style="min-height:42px;border:1px solid var(--mid);padding:6px;display:flex;flex-wrap:wrap;gap:4px;cursor:text;" onclick="document.getElementById('mail-to-input').focus()">
+            <input id="mail-to-input" style="border:none;outline:none;font-family:inherit;font-size:13px;min-width:200px;flex:1;" placeholder="Email puis Entrée...">
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="addAllClients()">+ Tous les clients</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Objet</label><input type="text" id="mail-subject" placeholder="Objet du message"></div>
+        <div class="form-group"><label>Message</label><textarea id="mail-body" rows="8" placeholder="Votre message..."></textarea></div>
+        <button class="btn btn-gold" onclick="sendMail()">Envoyer ✉️</button>
+      </div>
+      <div class="section-card">
+        <h3>Historique des envois</h3>
+        <div class="table-wrap"><table><thead><tr><th>Destinataire</th><th>Objet</th><th>Date</th><th>Statut</th></tr></thead><tbody id="mail-log-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- SITE -->
+    <div class="page" id="page-site">
+      <div class="page-title">Paramètres du site</div>
+      <div class="page-sub">Les modifications s'appliquent en temps réel sur la boutique</div>
+
+      <div class="section-card">
+        <h3>Identité</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Nom du site</label><input id="cfg-site_name" type="text"></div>
+          <div class="form-group"><label>Couleur accent <span class="color-preview" id="prev-accent"></span></label><input id="cfg-accent_color" type="color" oninput="document.getElementById('prev-accent').style.background=this.value"></div>
+          <div class="form-group"><label>Couleur principale</label><input id="cfg-primary_color" type="color"></div>
+          <div class="form-group"><label>Couleur fond</label><input id="cfg-bg_color" type="color"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Bannière promotionnelle</h3>
+        <div class="form-grid">
+          <div class="form-group form-full"><label>Texte de la bannière</label><input id="cfg-promo_banner_text" type="text"></div>
+          <div class="form-group"><label>Activée</label><select id="cfg-promo_banner_active"><option value="1">Oui</option><option value="0">Non</option></select></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Hero (page d'accueil)</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Surtitre</label><input id="cfg-hero_eyebrow" type="text"></div>
+          <div class="form-group"><label>Bouton CTA</label><input id="cfg-hero_cta" type="text"></div>
+          <div class="form-group form-full"><label>Titre (utilise *texte* pour italique doré)</label><input id="cfg-hero_title" type="text"></div>
+          <div class="form-group form-full"><label>Sous-titre</label><input id="cfg-hero_subtitle" type="text"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Livraison & Boutique</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Prix livraison (€)</label><input id="cfg-shipping_price" type="number" step="0.01"></div>
+          <div class="form-group"><label>Livraison offerte à partir de (€)</label><input id="cfg-shipping_free_threshold" type="number"></div>
+          <div class="form-group"><label>Adresse boutique</label><input id="cfg-boutique_address" type="text"></div>
+          <div class="form-group"><label>Horaires boutique</label><input id="cfg-boutique_hours" type="text"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" onclick="saveSiteConfig()">💾 Sauvegarder — s'applique en temps réel</button>
+    </div>
+
+    <!-- ÉQUIPE -->
+    <div class="page" id="page-staff">
+      <div class="page-title">Équipe</div>
+      <div class="page-sub">Gérer les comptes et rôles du personnel</div>
+      <div class="section-card" style="margin-bottom:20px;">
+        <h3>Créer un compte vendeur / admin</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Prénom</label><input id="new-firstname" type="text"></div>
+          <div class="form-group"><label>Nom</label><input id="new-lastname" type="text"></div>
+          <div class="form-group"><label>Email</label><input id="new-email" type="email"></div>
+          <div class="form-group"><label>Mot de passe</label><input id="new-password" type="password"></div>
+          <div class="form-group"><label>Rôle</label>
+            <select id="new-role">
+              <option value="vendeur">Vendeur</option>
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-gold" onclick="createStaff()">+ Créer le compte</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
+        <tbody id="staff-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- DEV -->
+    <div class="page" id="page-dev">
+      <div class="page-title">Panel Dev</div>
+      <div class="page-sub">Configuration technique — super admin uniquement</div>
+      <div class="section-card">
+        <h3>Stripe (Paiements)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:16px;">Récupère ces clés sur <strong>dashboard.stripe.com</strong> → Développeurs → Clés API</p>
+        <div class="form-grid">
+          <div class="form-group form-full"><label>Clé secrète (sk_live_... ou sk_test_...)</label><input id="dev-stripe_secret_key" type="password" placeholder="sk_..."></div>
+          <div class="form-group form-full"><label>Webhook Secret (whsec_...)</label><input id="dev-stripe_webhook_secret" type="password" placeholder="whsec_..."></div>
+          <div class="form-group form-full"><label>Clé publique (pk_live_... — affichée dans le frontend)</label><input id="dev-stripe_public_key" type="text" placeholder="pk_..."></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <h3>Gmail (Envoi d'emails)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:16px;">Utilise un <strong>mot de passe d'application Gmail</strong> (pas ton mot de passe habituel). Va dans Compte Google → Sécurité → Validation en 2 étapes → Mots de passe des applications.</p>
+        <div class="form-grid">
+          <div class="form-group"><label>Adresse Gmail</label><input id="dev-gmail_address" type="email" placeholder="boutique@gmail.com"></div>
+          <div class="form-group"><label>Mot de passe d'application (16 caractères)</label><input id="dev-gmail_app_password" type="password" placeholder="xxxx xxxx xxxx xxxx"></div>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="saveDevConfig()">💾 Sauvegarder la configuration</button>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL PRODUIT -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="product-modal-title">Nouveau produit</h3>
+      <div class="modal-close" onclick="closeModal('product-modal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Nom *</label><input id="prod-name" type="text"></div>
+        <div class="form-group"><label>Catégorie</label><input id="prod-category" type="text" placeholder="Femme, Homme, Unisexe..."></div>
+        <div class="form-group"><label>Prix (€) *</label><input id="prod-price" type="number" step="0.01"></div>
+        <div class="form-group"><label>Ancien prix (€)</label><input id="prod-old_price" type="number" step="0.01"></div>
+        <div class="form-group"><label>Stock</label><input id="prod-stock" type="number" value="100"></div>
+        <div class="form-group"><label>Tailles (séparées par virgules)</label><input id="prod-sizes" type="text" placeholder="XS, S, M, L, XL"></div>
+        <div class="form-group form-full"><label>Description</label><textarea id="prod-description"></textarea></div>
+        <div class="form-group form-full"><label>Matières / Entretien</label><textarea id="prod-materials"></textarea></div>
+        <div class="form-group form-full"><label>URL Image</label><input id="prod-image" type="text" placeholder="https://..."></div>
+        <div class="form-group"><label>Nouveau</label><select id="prod-is_new"><option value="0">Non</option><option value="1">Oui</option></select></div>
+        <div class="form-group"><label>Promo</label><select id="prod-is_promo"><option value="0">Non</option><option value="1">Oui</option></select></div>
+        <div class="form-group"><label>Dans la collection</label><select id="prod-in_collection"><option value="1">Oui</option><option value="0">Non</option></select></div>
+        <div class="form-group"><label>Actif sur le site</label><select id="prod-active"><option value="1">Oui</option><option value="0">Non</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('product-modal')">Annuler</button>
+      <button class="btn btn-gold" onclick="saveProduct()">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMMANDE -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="order-modal-number">Commande</h3>
+      <div class="modal-close" onclick="closeModal('order-modal')">✕</div>
+    </div>
+    <div class="modal-body" id="order-modal-body"></div>
+    <div class="modal-footer">
+      <select id="order-status-select" class="filter-select">
+        <option value="pending">En attente</option>
+        <option value="paid">Payée</option>
+        <option value="ready">Prête à retirer</option>
+        <option value="completed">Terminée</option>
+        <option value="cancelled">Annulée</option>
+      </select>
+      <button class="btn btn-gold" onclick="updateOrderStatus()">Mettre à jour</button>
+      <button class="btn" onclick="closeModal('order-modal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+const API = 'https://site-yasmina.onrender.com';
+// ══════════════════════════════════════════════════
+
+let token = localStorage.getItem('admin_token');
+let currentUser = null;
+let allOrders = [];
+let allClients = [];
+let mailRecipients = [];
+let currentOrderId = null;
+
+// ── AUTH ──────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  document.getElementById('login-err').textContent = '';
+  try {
+    const res = await api('/api/auth/login', 'POST', { email, password }, false);
+    if (!['vendeur','admin','super_admin'].includes(res.user.role)) {
+      document.getElementById('login-err').textContent = 'Accès non autorisé.';
+      return;
+    }
+    token = res.token;
+    localStorage.setItem('admin_token', token);
+    currentUser = res.user;
+    initApp();
+  } catch(e) {
+    document.getElementById('login-err').textContent = e.message || 'Email ou mot de passe incorrect';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  location.reload();
+}
+
+async function checkAuth() {
+  if (!token) return;
+  try {
+    currentUser = await api('/api/auth/me');
+    initApp();
+  } catch {
+    localStorage.removeItem('admin_token');
+  }
+}
+
+function initApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('sidebar-email').textContent = currentUser.email;
+  document.getElementById('sidebar-role').textContent = currentUser.role;
+  if (currentUser.role === 'super_admin') {
+    document.querySelectorAll('.super-only').forEach(el => el.style.display = 'flex');
+  }
+  // Charger le nom du site
+  api('/api/config', 'GET', null, false).then(cfg => {
+    if (cfg.site_name) document.getElementById('sidebar-site-name').textContent = cfg.site_name;
+  }).catch(() => {});
+  loadDashboard();
+}
+
+// ── API ───────────────────────────────────────────
+async function api(path, method = 'GET', body = null, withAuth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (withAuth && token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(API + path, {
+    method, headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+  return data;
+}
+
+// ── NAVIGATION ────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  const loaders = {
+    dashboard: loadDashboard,
+    orders: loadOrders,
+    products: loadProducts,
+    pickups: loadPickups,
+    clients: loadClients,
+    mails: () => { loadClients(); loadMailLog(); },
+    site: loadSiteConfig,
+    staff: loadStaff,
+    dev: loadDevConfig,
+  };
+  if (loaders[name]) loaders[name]();
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const orders = await api('/api/orders');
+    allOrders = orders;
+    const paid = orders.filter(o => ['paid','ready','completed'].includes(o.status));
+    const revenue = paid.reduce((s, o) => s + parseFloat(o.total), 0);
+    const pending = orders.filter(o => o.status === 'paid' && o.delivery_type === 'retrait');
+
+    document.getElementById('dash-sub').textContent = `Bienvenue, ${currentUser.first_name || currentUser.email}`;
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${orders.length}</div><div class="stat-label">Commandes totales</div></div>
+      <div class="stat-card"><div class="stat-value">${paid.length}</div><div class="stat-label">Commandes payées</div></div>
+      <div class="stat-card"><div class="stat-value">€ ${revenue.toFixed(2)}</div><div class="stat-label">Chiffre d'affaires</div></div>
+      <div class="stat-card"><div class="stat-value">${pending.length}</div><div class="stat-label">Retraits en attente</div></div>
+    `;
+    const tbody = document.querySelector('#recent-orders-table tbody');
+    tbody.innerHTML = orders.slice(0,10).map(o => `
+      <tr style="cursor:pointer;" onclick="openOrderModal(${o.id})">
+        <td><strong>${o.order_number}</strong></td>
+        <td>${o.customer_name}</td>
+        <td>€ ${parseFloat(o.total).toFixed(2)}</td>
+        <td>${o.delivery_type === 'retrait' ? '🏪 Retrait' : '🚚 Livraison'}</td>
+        <td><span class="badge badge-${o.status}">${o.status}</span></td>
+        <td>${new Date(o.created_at).toLocaleDateString('fr-FR')}</td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#888;padding:32px;">Aucune commande</td></tr>';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── ORDERS ────────────────────────────────────────
+async function loadOrders() {
+  try {
+    allOrders = await api('/api/orders');
+    renderOrders(allOrders);
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderOrders(orders) {
+  document.getElementById('orders-tbody').innerHTML = orders.map(o => `
+    <tr>
+      <td><strong>${o.order_number}</strong></td>
+      <td>${o.customer_name}</td>
+      <td>${o.customer_email}</td>
+      <td>€ ${parseFloat(o.total).toFixed(2)}</td>
+      <td>${o.delivery_type === 'retrait' ? '🏪 Retrait' : '🚚 Livraison'}</td>
+      <td><span class="badge badge-${o.status}">${o.status}</span></td>
+      <td>${new Date(o.created_at).toLocaleDateString('fr-FR')}</td>
+      <td><button class="btn btn-sm" onclick="openOrderModal(${o.id})">Voir</button></td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#888;padding:32px;">Aucune commande</td></tr>';
+}
+
+function filterOrders(q) {
+  q = q.toLowerCase();
+  renderOrders(allOrders.filter(o =>
+    o.order_number.toLowerCase().includes(q) ||
+    o.customer_name.toLowerCase().includes(q) ||
+    o.customer_email.toLowerCase().includes(q)
+  ));
+}
+
+function filterOrdersByStatus(s) {
+  renderOrders(s ? allOrders.filter(o => o.status === s) : allOrders);
+}
+
+function openOrderModal(id) {
+  currentOrderId = id;
+  const o = allOrders.find(o => o.id === id);
+  if (!o) return;
+  const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+  document.getElementById('order-modal-number').textContent = o.order_number;
+  document.getElementById('order-status-select').value = o.status;
+  document.getElementById('order-modal-body').innerHTML = `
+    <div class="order-detail-grid" style="margin-bottom:20px;">
+      <div class="detail-block"><label>Client</label><p>${o.customer_name}</p></div>
+      <div class="detail-block"><label>Email</label><p>${o.customer_email}</p></div>
+      <div class="detail-block"><label>Téléphone</label><p>${o.customer_phone || '—'}</p></div>
+      <div class="detail-block"><label>Mode de livraison</label><p>${o.delivery_type === 'retrait' ? '🏪 Retrait boutique' : `🚚 ${o.delivery_address || ''}`}</p></div>
+      <div class="detail-block"><label>Payé le</label><p>${o.paid_at ? new Date(o.paid_at).toLocaleString('fr-FR') : '—'}</p></div>
+      <div class="detail-block"><label>Stripe Session</label><p style="font-size:11px;word-break:break-all;">${o.stripe_session_id || '—'}</p></div>
+    </div>
+    ${o.notes ? `<div style="background:#fffbf0;border:1px solid #f0e0b0;padding:12px;margin-bottom:16px;font-size:13px;"><strong>📝 Note :</strong> ${o.notes}</div>` : ''}
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 0;border-bottom:1px solid var(--mid);font-size:10px;letter-spacing:2px;color:#888;text-transform:uppercase;">Article</th>
+        <th style="text-align:center;padding:8px;font-size:10px;letter-spacing:2px;color:#888;text-transform:uppercase;">Taille</th>
+        <th style="text-align:center;font-size:10px;letter-spacing:2px;color:#888;text-transform:uppercase;">Qté</th>
+        <th style="text-align:right;font-size:10px;letter-spacing:2px;color:#888;text-transform:uppercase;">Prix</th>
+      </tr></thead>
+      <tbody>${items.map(i => `
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid var(--mid);">${i.name}</td>
+          <td style="text-align:center;border-bottom:1px solid var(--mid);">${i.size || '—'}</td>
+          <td style="text-align:center;border-bottom:1px solid var(--mid);">×${i.quantity}</td>
+          <td style="text-align:right;border-bottom:1px solid var(--mid);">€ ${(i.price * i.quantity).toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="text-align:right;font-size:18px;font-weight:600;">Total : € ${parseFloat(o.total).toFixed(2)}</div>
+    ${o.qr_code && o.delivery_type === 'retrait' ? `
+      <div style="text-align:center;margin-top:20px;">
+        <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:12px;">QR Code retrait</p>
+        <img src="${o.qr_code}" style="width:150px;height:150px;">
+      </div>` : ''}
+  `;
+  document.getElementById('order-modal').classList.add('open');
+}
+
+async function updateOrderStatus() {
+  const status = document.getElementById('order-status-select').value;
+  try {
+    await api(`/api/orders/${currentOrderId}/status`, 'PUT', { status });
+    showToast('Statut mis à jour ✓', 'success');
+    closeModal('order-modal');
+    loadOrders();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── PRODUCTS ──────────────────────────────────────
+async function loadProducts() {
+  try {
+    const products = await api('/api/products', 'GET', null, false);
+    document.getElementById('products-tbody').innerHTML = products.map(p => `
+      <tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.category}</td>
+        <td>€ ${parseFloat(p.price).toFixed(2)}${p.old_price ? ` <span style="text-decoration:line-through;color:#aaa;font-size:11px;">€ ${parseFloat(p.old_price).toFixed(2)}</span>` : ''}</td>
+        <td>${p.stock}</td>
+        <td>
+          ${p.is_new ? '<span class="badge" style="background:#fff3e0;color:#e65100;">Nouveau</span>' : ''}
+          ${p.is_promo ? '<span class="badge" style="background:#ffebee;color:#c62828;">Promo</span>' : ''}
+          ${p.in_collection ? '<span class="badge badge-paid">Collection</span>' : ''}
+        </td>
+        <td>${p.active ? '<span class="badge badge-paid">Actif</span>' : '<span class="badge badge-cancelled">Inactif</span>'}</td>
+        <td><button class="btn btn-sm" onclick="editProduct(${p.id})">Modifier</button></td>
+      </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#888;padding:32px;">Aucun produit</td></tr>';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+let productsCache = [];
+async function editProduct(id) {
+  if (!productsCache.length) {
+    productsCache = await api('/api/products', 'GET', null, false);
+  }
+  const p = productsCache.find(x => x.id === id);
+  if (p) openProductModal(p);
+}
+
+function openProductModal(product = null) {
+  productsCache = productsCache; // keep cache
+  document.getElementById('product-modal-title').textContent = product ? 'Modifier le produit' : 'Nouveau produit';
+  const fields = ['id','name','category','price','old_price','stock','description','materials','image'];
+  fields.forEach(f => {
+    const el = document.getElementById('prod-' + f);
+    if (el) el.value = product ? (product[f] ?? '') : '';
+  });
+  if (product) {
+    const sizes = Array.isArray(product.sizes) ? product.sizes : (product.sizes ? JSON.parse(product.sizes) : []);
+    document.getElementById('prod-sizes').value = sizes.join(', ');
+    document.getElementById('prod-is_new').value = product.is_new ? '1' : '0';
+    document.getElementById('prod-is_promo').value = product.is_promo ? '1' : '0';
+    document.getElementById('prod-in_collection').value = product.in_collection ? '1' : '0';
+    document.getElementById('prod-active').value = product.active ? '1' : '0';
+  } else {
+    document.getElementById('prod-sizes').value = '';
+    document.getElementById('prod-is_new').value = '0';
+    document.getElementById('prod-is_promo').value = '0';
+    document.getElementById('prod-in_collection').value = '1';
+    document.getElementById('prod-active').value = '1';
+  }
+  document.getElementById('product-modal').classList.add('open');
+}
+
+async function saveProduct() {
+  const id = document.getElementById('prod-id').value;
+  const data = {
+    name: document.getElementById('prod-name').value,
+    category: document.getElementById('prod-category').value,
+    price: parseFloat(document.getElementById('prod-price').value) || 0,
+    old_price: parseFloat(document.getElementById('prod-old_price').value) || null,
+    stock: parseInt(document.getElementById('prod-stock').value) || 100,
+    sizes: document.getElementById('prod-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+    description: document.getElementById('prod-description').value,
+    materials: document.getElementById('prod-materials').value,
+    image: document.getElementById('prod-image').value,
+    is_new: document.getElementById('prod-is_new').value === '1',
+    is_promo: document.getElementById('prod-is_promo').value === '1',
+    in_collection: document.getElementById('prod-in_collection').value === '1',
+    active: document.getElementById('prod-active').value === '1',
+  };
+  try {
+    if (id) await api(`/api/products/${id}`, 'PUT', data);
+    else await api('/api/products', 'POST', data);
+    showToast('Produit sauvegardé ✓', 'success');
+    closeModal('product-modal');
+    productsCache = [];
+    loadProducts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── PICKUPS ───────────────────────────────────────
+async function loadPickups() {
+  try {
+    const pickups = await api('/api/orders/pickups/history');
+    document.getElementById('pickups-tbody').innerHTML = pickups.map(p => {
+      const items = typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []);
+      return `<tr>
+        <td><strong>${p.order_number}</strong></td>
+        <td>${p.customer_name}</td>
+        <td>${p.vendeur_name}</td>
+        <td style="font-size:12px;">${items.map(i => i.name).join(', ')}</td>
+        <td>€ ${parseFloat(p.total).toFixed(2)}</td>
+        <td>${new Date(p.completed_at).toLocaleString('fr-FR')}</td>
+        <td>${p.signature ? `<img src="${p.signature}" style="height:44px;border:1px solid var(--mid);background:white;">` : '—'}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;color:#888;padding:32px;">Aucun retrait effectué</td></tr>';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── CLIENTS ───────────────────────────────────────
+async function loadClients() {
+  try {
+    allClients = await api('/api/users/clients');
+    document.getElementById('clients-tbody').innerHTML = allClients.map(c => `
+      <tr>
+        <td>${c.first_name} ${c.last_name}</td>
+        <td>${c.email}</td>
+        <td>${c.phone || '—'}</td>
+        <td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
+        <td><button class="btn btn-sm" onclick="mailTo('${c.email}')">✉️ Email</button></td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#888;padding:32px;">Aucun client inscrit</td></tr>';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── MAILS ─────────────────────────────────────────
+function mailTo(email) { showPage('mails'); addRecipient(email); }
+
+function addRecipient(email) {
+  if (!email || mailRecipients.includes(email)) return;
+  mailRecipients.push(email);
+  renderChips();
+}
+
+function removeRecipient(email) {
+  mailRecipients = mailRecipients.filter(e => e !== email);
+  renderChips();
+}
+
+function renderChips() {
+  const container = document.getElementById('mail-chips');
+  const input = document.getElementById('mail-to-input');
+  container.innerHTML = '';
+  mailRecipients.forEach(email => {
+    const chip = document.createElement('div');
+    chip.className = 'mail-chip';
+    chip.innerHTML = `${email}<button onclick="removeRecipient('${email}')">×</button>`;
+    container.appendChild(chip);
+  });
+  container.appendChild(input);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mail-to-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = e.target.value.trim().replace(/,$/, '');
+      if (val) { addRecipient(val); e.target.value = ''; }
+    }
+  });
+});
+
+function addAllClients() {
+  allClients.forEach(c => addRecipient(c.email));
+  showToast(`${allClients.length} clients ajoutés`, 'success');
+}
+
+async function sendMail() {
+  if (!mailRecipients.length) return showToast('Ajoutez au moins un destinataire', 'error');
+  const subject = document.getElementById('mail-subject').value;
+  const message = document.getElementById('mail-body').value;
+  if (!subject || !message) return showToast('Objet et message requis', 'error');
+  let sent = 0;
+  for (const to of mailRecipients) {
+    try { await api('/api/mail/send', 'POST', { to, subject, message }); sent++; }
+    catch(e) { console.error(to, e); }
+  }
+  showToast(`${sent}/${mailRecipients.length} emails envoyés`, 'success');
+  mailRecipients = []; renderChips();
+  document.getElementById('mail-subject').value = '';
+  document.getElementById('mail-body').value = '';
+  loadMailLog();
+}
+
+async function loadMailLog() {
+  try {
+    const logs = await api('/api/mail/log');
+    document.getElementById('mail-log-tbody').innerHTML = logs.map(l => `
+      <tr>
+        <td>${l.to_email}</td>
+        <td>${l.subject}</td>
+        <td>${new Date(l.sent_at).toLocaleString('fr-FR')}</td>
+        <td><span class="badge badge-paid">${l.status}</span></td>
+      </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#888;padding:32px;">Aucun email</td></tr>';
+  } catch {}
+}
+
+// ── SITE CONFIG ───────────────────────────────────
+async function loadSiteConfig() {
+  try {
+    const config = await api('/api/config', 'GET', null, false);
+    Object.entries(config).forEach(([key, value]) => {
+      const el = document.getElementById('cfg-' + key);
+      if (el) el.value = value;
+    });
+    document.getElementById('prev-accent').style.background = config.accent_color || '#c9a96e';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveSiteConfig() {
+  const config = {};
+  document.querySelectorAll('[id^="cfg-"]').forEach(el => {
+    config[el.id.replace('cfg-', '')] = el.value;
+  });
+  try {
+    await api('/api/config', 'PUT', config);
+    showToast('Paramètres sauvegardés — site mis à jour ✓', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── STAFF ─────────────────────────────────────────
+async function loadStaff() {
+  try {
+    const users = await api('/api/auth/users');
+    document.getElementById('staff-tbody').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.first_name} ${u.last_name}</td>
+        <td>${u.email}</td>
+        <td><span class="badge badge-${u.role}">${u.role}</span></td>
+        <td>${u.last_login ? new Date(u.last_login).toLocaleString('fr-FR') : 'Jamais'}</td>
+        <td>
+          ${currentUser.role === 'super_admin' && u.id !== currentUser.id ? `
+          <select onchange="changeRole(${u.id}, this.value)" style="padding:4px 8px;border:1px solid var(--mid);font-size:12px;background:white;">
+            <option ${u.role==='client'?'selected':''} value="client">client</option>
+            <option ${u.role==='vendeur'?'selected':''} value="vendeur">vendeur</option>
+            <option ${u.role==='admin'?'selected':''} value="admin">admin</option>
+            <option ${u.role==='super_admin'?'selected':''} value="super_admin">super_admin</option>
+          </select>` : `<span style="color:#888;font-size:12px;">${u.role}</span>`}
+        </td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#888;padding:32px;">Aucun utilisateur</td></tr>';
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function createStaff() {
+  const body = {
+    email: document.getElementById('new-email').value.trim(),
+    password: document.getElementById('new-password').value,
+    first_name: document.getElementById('new-firstname').value.trim(),
+    last_name: document.getElementById('new-lastname').value.trim(),
+  };
+  if (!body.email || !body.password) return showToast('Email et mot de passe requis', 'error');
+  try {
+    // Créer le compte
+    const res = await api('/api/auth/register', 'POST', body, false);
+    // Changer le rôle
+    const role = document.getElementById('new-role').value;
+    if (role !== 'client') {
+      await api(`/api/auth/users/${res.user.id}/role`, 'PUT', { role });
+    }
+    showToast(`Compte ${role} créé pour ${body.email} ✓`, 'success');
+    document.getElementById('new-email').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('new-firstname').value = '';
+    document.getElementById('new-lastname').value = '';
+    loadStaff();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function changeRole(userId, role) {
+  try {
+    await api(`/api/auth/users/${userId}/role`, 'PUT', { role });
+    showToast('Rôle mis à jour ✓', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── DEV CONFIG ────────────────────────────────────
+async function loadDevConfig() {
+  try {
+    const config = await api('/api/config/dev');
+    Object.entries(config).forEach(([key, value]) => {
+      const el = document.getElementById('dev-' + key);
+      if (el) el.value = value;
+    });
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveDevConfig() {
+  const config = {};
+  document.querySelectorAll('[id^="dev-"]').forEach(el => {
+    if (!el.disabled && el.value && !el.value.includes('••')) {
+      config[el.id.replace('dev-', '')] = el.value;
+    }
+  });
+  try {
+    await api('/api/config/dev', 'PUT', config);
+    showToast('Configuration sauvegardée ✓', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── UTILS ─────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── INIT ──────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>

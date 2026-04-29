@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commande confirmée — MAISON</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--accent:#c9a96e;--primary:#0a0a0a;--light:#f8f6f2;--mid:#e8e4dc;}
+body{font-family:'Montserrat',sans-serif;background:var(--light);color:var(--primary);min-height:100vh;display:flex;flex-direction:column;}
+
+nav{
+  background:rgba(248,246,242,0.96);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  padding:0 60px;height:70px;display:flex;align-items:center;justify-content:space-between;
+}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:26px;letter-spacing:8px;color:var(--primary);text-decoration:none;}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+
+.card{
+  background:white;border:1px solid var(--mid);
+  max-width:580px;width:100%;padding:56px 48px;text-align:center;
+}
+
+.check-circle{
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(46,204,113,0.1);border:2px solid #2ecc71;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 32px;font-size:32px;
+}
+
+.title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;font-weight:300;letter-spacing:2px;
+  margin-bottom:8px;
+}
+.subtitle{
+  font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:#888;margin-bottom:36px;
+}
+
+.order-box{
+  background:var(--light);border-left:3px solid var(--accent);
+  padding:20px 24px;margin-bottom:32px;text-align:left;
+}
+.order-box-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:6px;}
+.order-number{font-size:22px;font-weight:600;letter-spacing:3px;color:var(--primary);}
+
+.info-block{
+  background:var(--light);padding:20px 24px;margin-bottom:24px;
+  text-align:left;font-size:13px;color:#555;line-height:1.8;
+}
+.info-block strong{color:var(--primary);display:block;margin-bottom:6px;font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+
+.retrait-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.3);
+  padding:10px 18px;font-size:12px;letter-spacing:1px;color:var(--accent);
+  margin-bottom:24px;
+}
+
+.btn{
+  display:inline-block;padding:14px 40px;
+  background:var(--primary);color:white;
+  font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  text-decoration:none;border:none;cursor:pointer;transition:background 0.2s;
+}
+.btn:hover{background:var(--accent);}
+.btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary);margin-right:12px;}
+.btn-outline:hover{background:var(--primary);color:white;}
+
+.loading{opacity:0.5;font-size:13px;color:#888;padding:40px 0;}
+
+footer{
+  background:var(--primary);color:rgba(255,255,255,0.4);
+  text-align:center;padding:24px;font-size:11px;letter-spacing:2px;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo" id="navLogo">MAISON</a>
+</nav>
+
+<main>
+  <div class="card" id="card-loading">
+    <div class="loading">Vérification du paiement...</div>
+  </div>
+
+  <div class="card" id="card-success" style="display:none;">
+    <div class="check-circle">✓</div>
+    <div class="title">Commande confirmée</div>
+    <div class="subtitle">Merci pour votre achat</div>
+
+    <div class="order-box">
+      <div class="order-box-label">Numéro de commande</div>
+      <div class="order-number" id="success-order-number">—</div>
+    </div>
+
+    <div class="info-block">
+      <strong>Confirmation envoyée par email</strong>
+      Un email de confirmation a été envoyé à <span id="success-email" style="color:var(--accent);"></span>
+    </div>
+
+    <div id="retrait-block" style="display:none;">
+      <div class="retrait-badge">
+        🏪 Retrait en boutique — QR code dans votre email
+      </div>
+      <div class="info-block">
+        <strong>Comment récupérer votre commande</strong>
+        Présentez le QR code reçu par email lors de votre passage en boutique.
+        Un vendeur scannera votre code et vous remettra votre colis.<br><br>
+        <span id="success-boutique-address" style="font-weight:500;"></span><br>
+        <span id="success-boutique-hours" style="color:#888;font-size:12px;"></span>
+      </div>
+    </div>
+
+    <div id="livraison-block" style="display:none;">
+      <div class="info-block">
+        <strong>Livraison à domicile</strong>
+        Votre colis sera expédié à l'adresse indiquée sous 2 à 5 jours ouvrés.
+      </div>
+    </div>
+
+    <div style="margin-top:8px;">
+      <a href="index.html" class="btn btn-outline">← Continuer mes achats</a>
+    </div>
+  </div>
+
+  <div class="card" id="card-error" style="display:none;text-align:center;padding:56px 48px;">
+    <div style="font-size:48px;margin-bottom:24px;">⚠️</div>
+    <div class="title" style="font-size:28px;">Paiement en attente</div>
+    <p style="color:#888;font-size:13px;margin:16px 0 32px;line-height:1.7;">
+      Votre paiement est en cours de traitement.<br>
+      Vous recevrez un email de confirmation sous quelques minutes.
+    </p>
+    <a href="index.html" class="btn">Retour à la boutique</a>
+  </div>
+</main>
+
+<footer>
+  <span id="footer-copy">© 2025 MAISON — Tous droits réservés</span>
+</footer>
+
+<script>
+const API = 'https://site-yasmina.onrender.com';
+
+async function init() {
+  // Charger config (nom du site, etc.)
+  try {
+    const config = await fetch(API + '/api/config').then(r => r.json());
+    if (config.site_name) {
+      document.getElementById('navLogo').textContent = config.site_name;
+      document.getElementById('footer-copy').textContent = `© ${new Date().getFullYear()} ${config.site_name} — Tous droits réservés`;
+      document.title = `Commande confirmée — ${config.site_name}`;
+    }
+    if (config.boutique_address) document.getElementById('success-boutique-address').textContent = config.boutique_address;
+    if (config.boutique_hours) document.getElementById('success-boutique-hours').textContent = config.boutique_hours;
+  } catch {}
+
+  // Récupérer session_id depuis l'URL
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+
+  if (!sessionId) {
+    showError();
+    return;
+  }
+
+  try {
+    // Vérifier le statut du paiement
+    const session = await fetch(`${API}/api/stripe/session/${sessionId}`).then(r => r.json());
+
+    if (session.status === 'paid' || session.status === 'no_payment_required') {
+      // Récupérer les infos de la commande
+      try {
+        const order = await fetch(`${API}/api/orders/by-session/${sessionId}`).then(r => r.json());
+        document.getElementById('success-order-number').textContent = order.order_number || '—';
+        document.getElementById('success-email').textContent = session.email || '';
+
+        if (order.delivery_type === 'retrait') {
+          document.getElementById('retrait-block').style.display = 'block';
+        } else {
+          document.getElementById('livraison-block').style.display = 'block';
+        }
+      } catch {
+        document.getElementById('success-email').textContent = session.email || '';
+        document.getElementById('livraison-block').style.display = 'block';
+      }
+
+      showSuccess();
+    } else {
+      showError();
+    }
+  } catch (e) {
+    console.error(e);
+    showError();
+  }
+}
+
+function showSuccess() {
+  document.getElementById('card-loading').style.display = 'none';
+  document.getElementById('card-success').style.display = 'block';
+}
+
+function showError() {
+  document.getElementById('card-loading').style.display = 'none';
+  document.getElementById('card-error').style.display = 'block';
+}
+
+init();
+</script>
+</body>
+</html>
