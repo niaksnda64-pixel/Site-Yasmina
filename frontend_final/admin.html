@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — MAISON</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#c9a96e;--primary:#0a0a0a;--light:#f8f6f2;--mid:#e8e4dc;--text-muted:#888;--sidebar:240px;--danger:#e74c3c;--success:#27ae60;--font-serif:'Cormorant Garamond',Georgia,serif;--font-sans:'Montserrat',sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:#f0ede8;color:var(--primary);min-height:100vh;display:flex;}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--primary);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:white;padding:56px 48px;width:400px;text-align:center;}
+.login-logo{font-family:var(--font-serif);font-size:32px;font-weight:300;letter-spacing:8px;margin-bottom:8px;}
+.login-sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:40px;}
+.login-box input{width:100%;padding:12px 16px;border:1px solid var(--mid);font-family:var(--font-sans);font-size:13px;outline:none;margin-bottom:12px;transition:border .2s;}
+.login-box input:focus{border-color:var(--accent);}
+.login-box button{width:100%;padding:14px;background:var(--primary);color:white;border:none;font-size:11px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans);transition:background .2s;}
+.login-box button:hover{background:var(--accent);}
+.login-err{color:var(--danger);font-size:12px;margin-top:10px;}
+
+/* LAYOUT */
+#app{display:flex;width:100%;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--primary);color:white;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-logo{font-family:var(--font-serif);font-size:22px;font-weight:300;letter-spacing:6px;padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08);text-transform:uppercase;}
+.sidebar-role{font-size:9px;letter-spacing:2px;color:var(--accent);padding:0 24px 20px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto;}
+.nav-section-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:16px 24px 8px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;cursor:pointer;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.6);transition:all .2s;border-left:2px solid transparent;}
+.nav-item:hover{color:white;background:rgba(255,255,255,.04);}
+.nav-item.active{color:white;border-left-color:var(--accent);background:rgba(255,255,255,.06);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-footer{padding:20px 24px;border-top:1px solid rgba(255,255,255,.08);}
+.user-info{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:12px;line-height:1.5;}
+.logout-btn{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);cursor:pointer;transition:color .2s;border:none;background:none;font-family:var(--font-sans);}
+.logout-btn:hover{color:white;}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+.topbar{background:white;padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--mid);position:sticky;top:0;z-index:50;}
+.page-title{font-family:var(--font-serif);font-size:22px;font-weight:300;letter-spacing:2px;}
+.topbar-actions{display:flex;gap:12px;}
+.btn{padding:9px 20px;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans);border:none;transition:all .2s;}
+.btn-primary{background:var(--primary);color:white;} .btn-primary:hover{background:var(--accent);}
+.btn-accent{background:var(--accent);color:white;} .btn-accent:hover{opacity:.85;}
+.btn-outline{background:none;border:1px solid var(--mid);color:var(--primary);} .btn-outline:hover{border-color:var(--primary);}
+.btn-danger{background:var(--danger);color:white;} .btn-danger:hover{opacity:.85;}
+.btn-sm{padding:6px 14px;font-size:9px;}
+.content{padding:32px 40px;flex:1;}
+
+/* SECTIONS */
+.section{display:none;} .section.active{display:block;}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-bottom:32px;}
+.stat-card{background:white;padding:24px;border-bottom:3px solid var(--accent);}
+.stat-value{font-family:var(--font-serif);font-size:36px;font-weight:300;letter-spacing:2px;margin-bottom:4px;}
+.stat-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);}
+
+/* TABLE */
+.table-wrap{background:white;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);padding:16px 20px;text-align:left;border-bottom:2px solid var(--mid);white-space:nowrap;}
+td{padding:14px 20px;border-bottom:1px solid var(--mid);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafaf8;}
+.badge{display:inline-block;padding:3px 10px;font-size:9px;letter-spacing:2px;text-transform:uppercase;border-radius:0;}
+.badge-paid{background:#e8f5e9;color:var(--success);}
+.badge-pending{background:#fff8e1;color:#f39c12;}
+.badge-ready{background:#e3f2fd;color:#1976d2;}
+.badge-completed{background:#f3e5f5;color:#7b1fa2;}
+.badge-cancelled{background:#ffebee;color:var(--danger);}
+.badge-new{background:rgba(201,169,110,.15);color:var(--accent);}
+.badge-promo{background:rgba(231,76,60,.12);color:var(--danger);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);}
+.form-group input,.form-group select,.form-group textarea{padding:10px 14px;border:1px solid var(--mid);font-family:var(--font-sans);font-size:13px;outline:none;background:white;transition:border .2s;width:100%;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--mid);}
+.toggle-label{font-size:13px;}
+.toggle-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#ddd;cursor:pointer;border-radius:24px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-header{padding:24px 32px;border-bottom:1px solid var(--mid);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:10;}
+.modal-title{font-family:var(--font-serif);font-size:22px;font-weight:300;letter-spacing:2px;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);}
+.modal-body{padding:32px;}
+.modal-footer{padding:20px 32px;border-top:1px solid var(--mid);display:flex;gap:12px;justify-content:flex-end;background:white;position:sticky;bottom:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--primary);color:white;padding:14px 24px;font-size:12px;letter-spacing:2px;text-transform:uppercase;z-index:9999;transform:translateY(80px);transition:transform .3s;border-left:3px solid var(--accent);}
+.toast.show{transform:translateY(0);}
+.toast.error{border-left-color:var(--danger);}
+
+/* CONFIG */
+.config-section{background:white;padding:32px;margin-bottom:20px;}
+.config-section-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid var(--mid);}
+.color-input-wrap{display:flex;gap:10px;align-items:center;}
+.color-input-wrap input[type=color]{width:40px;height:38px;border:1px solid var(--mid);padding:2px;cursor:pointer;border-radius:0;}
+.color-input-wrap input[type=text]{flex:1;}
+
+/* ORDER DETAIL */
+.order-items-list{background:var(--light);padding:16px 20px;margin-bottom:16px;}
+.order-item-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--mid);font-size:13px;}
+.order-item-row:last-child{border-bottom:none;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:80px 20px;color:var(--text-muted);}
+.empty-state .empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-state p{font-size:14px;letter-spacing:1px;}
+
+/* SEARCH */
+.search-bar{display:flex;gap:12px;margin-bottom:20px;align-items:center;}
+.search-bar input{flex:1;padding:10px 16px;border:1px solid var(--mid);font-family:var(--font-sans);font-size:13px;outline:none;max-width:360px;}
+.search-bar input:focus{border-color:var(--accent);}
+.filter-select{padding:10px 14px;border:1px solid var(--mid);font-family:var(--font-sans);font-size:12px;outline:none;cursor:pointer;}
+
+/* IMAGE PREVIEW */
+.img-preview{width:80px;height:80px;object-fit:cover;border:1px solid var(--mid);}
+.img-preview-placeholder{width:80px;height:80px;background:var(--mid);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);}
+
+/* DEV PANEL */
+.dev-section{background:white;padding:28px 32px;margin-bottom:16px;border-left:3px solid transparent;}
+.dev-section.configured{border-left-color:var(--success);}
+.dev-section.not-configured{border-left-color:var(--danger);}
+.dev-section-title{font-family:var(--font-serif);font-size:20px;font-weight:300;margin-bottom:4px;}
+.dev-section-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px;}
+.dev-status{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;display:inline-block;margin-bottom:16px;}
+.dev-status.ok{background:#e8f5e9;color:var(--success);}
+.dev-status.ko{background:#ffebee;color:var(--danger);}
+
+@media(max-width:768px){
+  .sidebar{width:0;overflow:hidden;}
+  .main{margin-left:0;}
+  .form-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo" id="loginLogo">MAISON</div>
+    <div class="login-sub">Panel Administration</div>
+    <input type="email" id="loginEmail" placeholder="Email administrateur" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="loginPassword" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Connexion</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo" id="sidebarLogo">MAISON</div>
+    <div class="sidebar-role" id="sidebarRole">Admin</div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Tableau de bord</div>
+      <div class="nav-item active" data-section="dashboard" onclick="goTo('dashboard')">
+        <span class="icon">📊</span> Vue d'ensemble
+      </div>
+
+      <div class="nav-section-title">Boutique</div>
+      <div class="nav-item" data-section="orders" onclick="goTo('orders')">
+        <span class="icon">📦</span> Commandes
+      </div>
+      <div class="nav-item" data-section="products" onclick="goTo('products')">
+        <span class="icon">👗</span> Produits
+      </div>
+      <div class="nav-item" data-section="clients" onclick="goTo('clients')">
+        <span class="icon">👥</span> Clients
+      </div>
+
+      <div class="nav-section-title">Contenu</div>
+      <div class="nav-item" data-section="siteconfig" onclick="goTo('siteconfig')">
+        <span class="icon">🎨</span> Paramètres du site
+      </div>
+      <div class="nav-item" data-section="emails" onclick="goTo('emails')">
+        <span class="icon">✉️</span> Emails
+      </div>
+      <div class="nav-item" data-section="staff" onclick="goTo('staff')" id="nav-staff" style="display:none;">
+        <span class="icon">🔑</span> Équipe & Rôles
+      </div>
+
+      <div class="nav-section-title" id="nav-dev-title" style="display:none;">Développeur</div>
+      <div class="nav-item" data-section="devpanel" onclick="goTo('devpanel')" id="nav-dev" style="display:none;">
+        <span class="icon">⚙️</span> API & Clés
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info" id="userInfo"></div>
+      <button class="logout-btn" onclick="doLogout()">↩ Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="page-title" id="pageTitle">Vue d'ensemble</span>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="section active" id="section-dashboard">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><div class="stat-value" id="stat-orders">—</div><div class="stat-label">Commandes totales</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Chiffre d'affaires</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">En attente</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-products">—</div><div class="stat-label">Produits actifs</div></div>
+        </div>
+        <div style="background:white;padding:24px 28px;">
+          <h3 style="font-family:var(--font-serif);font-size:20px;font-weight:300;margin-bottom:20px;letter-spacing:1px;">Dernières commandes</h3>
+          <div id="recentOrders"></div>
+        </div>
+      </div>
+
+      <!-- ── ORDERS ── -->
+      <div class="section" id="section-orders">
+        <div class="search-bar">
+          <input type="text" id="orderSearch" placeholder="Rechercher par nom, email, N°..." oninput="filterOrders()">
+          <select class="filter-select" id="orderStatusFilter" onchange="filterOrders()">
+            <option value="">Tous les statuts</option>
+            <option value="pending">En attente</option>
+            <option value="paid">Payé</option>
+            <option value="ready">Prêt</option>
+            <option value="completed">Complété</option>
+            <option value="cancelled">Annulé</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>N° Commande</th><th>Client</th><th>Total</th><th>Livraison</th><th>Statut</th><th>Date</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="ordersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PRODUCTS ── -->
+      <div class="section" id="section-products">
+        <div class="search-bar">
+          <input type="text" id="productSearch" placeholder="Rechercher un produit..." oninput="filterProducts()">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Tags</th><th>Statut</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="productsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── CLIENTS ── -->
+      <div class="section" id="section-clients">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Nom</th><th>Email</th><th>Téléphone</th><th>Inscrit le</th>
+            </tr></thead>
+            <tbody id="clientsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SITE CONFIG ── -->
+      <div class="section" id="section-siteconfig">
+        <div class="config-section">
+          <div class="config-section-title">Identité du site</div>
+          <div class="form-grid">
+            <div class="form-group form-full"><label>Nom du site</label><input type="text" id="cfg-site_name" placeholder="MAISON"></div>
+            <div class="form-group form-full"><label>Slogan (footer)</label><input type="text" id="cfg-footer_tagline" placeholder="L'élégance dans chaque détail."></div>
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Couleurs</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Couleur accent (dorée)</label>
+              <div class="color-input-wrap">
+                <input type="color" id="cfg-accent_color-picker" oninput="document.getElementById('cfg-accent_color').value=this.value">
+                <input type="text" id="cfg-accent_color" placeholder="#c9a96e" oninput="document.getElementById('cfg-accent_color-picker').value=this.value">
+              </div>
+            </div>
+            <div class="form-group"><label>Couleur principale (fond)</label>
+              <div class="color-input-wrap">
+                <input type="color" id="cfg-primary_color-picker" oninput="document.getElementById('cfg-primary_color').value=this.value">
+                <input type="text" id="cfg-primary_color" placeholder="#0a0a0a" oninput="document.getElementById('cfg-primary_color-picker').value=this.value">
+              </div>
+            </div>
+            <div class="form-group"><label>Couleur fond du site</label>
+              <div class="color-input-wrap">
+                <input type="color" id="cfg-bg_color-picker" oninput="document.getElementById('cfg-bg_color').value=this.value">
+                <input type="text" id="cfg-bg_color" placeholder="#f8f6f2" oninput="document.getElementById('cfg-bg_color-picker').value=this.value">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Hero (section d'accueil)</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Eyebrow (petit texte)</label><input type="text" id="cfg-hero_eyebrow" placeholder="Nouvelle Collection"></div>
+            <div class="form-group"><label>Bouton CTA</label><input type="text" id="cfg-hero_cta" placeholder="Découvrir"></div>
+            <div class="form-group form-full"><label>Titre (entourez un mot de *astérisques* pour italique doré)</label><input type="text" id="cfg-hero_title" placeholder="L'Art de *l'Élégance*"></div>
+            <div class="form-group form-full"><label>Sous-titre</label><input type="text" id="cfg-hero_subtitle" placeholder="Des pièces pensées pour durer..."></div>
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Bannière promotionnelle</div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Afficher la bannière</div><div class="toggle-sub">Bande noire en haut du site</div></div>
+            <label class="toggle"><input type="checkbox" id="cfg-promo_banner_active"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-group" style="margin-top:16px;"><label>Texte de la bannière</label><input type="text" id="cfg-promo_banner_text" placeholder="LIVRAISON OFFERTE DÈS 200€"></div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Livraison</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Prix livraison (€)</label><input type="number" id="cfg-shipping_price" placeholder="9.90" step="0.01"></div>
+            <div class="form-group"><label>Seuil livraison gratuite (€)</label><input type="number" id="cfg-shipping_free_threshold" placeholder="200"></div>
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Boutique (retrait en magasin)</div>
+          <div class="form-grid">
+            <div class="form-group form-full"><label>Adresse boutique</label><input type="text" id="cfg-boutique_address" placeholder="12 Rue de la Paix, 75001 Paris"></div>
+            <div class="form-group form-full"><label>Horaires</label><input type="text" id="cfg-boutique_hours" placeholder="Lun–Sam 10h–19h"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+          <button class="btn btn-primary" onclick="saveConfig()">Enregistrer les paramètres</button>
+        </div>
+      </div>
+
+      <!-- ── EMAILS ── -->
+      <div class="section" id="section-emails">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;">
+          <div style="background:white;padding:28px 32px;">
+            <h3 style="font-family:var(--font-serif);font-size:20px;font-weight:300;margin-bottom:20px;letter-spacing:1px;">Envoyer un email</h3>
+            <div class="form-group" style="margin-bottom:12px;"><label>Destinataire</label><input type="email" id="mail-to" placeholder="client@email.fr"></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Sujet</label><input type="text" id="mail-subject" placeholder="Objet du message"></div>
+            <div class="form-group" style="margin-bottom:16px;"><label>Message</label><textarea id="mail-body" style="min-height:120px;" placeholder="Votre message..."></textarea></div>
+            <button class="btn btn-primary" onclick="sendEmail()" style="width:100%;">Envoyer</button>
+          </div>
+          <div style="background:white;padding:28px 32px;">
+            <h3 style="font-family:var(--font-serif);font-size:20px;font-weight:300;margin-bottom:20px;letter-spacing:1px;">Historique des envois</h3>
+            <div id="emailLog" style="max-height:320px;overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STAFF ── -->
+      <div class="section" id="section-staff">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Nom</th><th>Email</th><th>Rôle actuel</th><th>Inscrit le</th><th>Changer le rôle</th>
+            </tr></thead>
+            <tbody id="staffTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── DEV PANEL ── -->
+      <div class="section" id="section-devpanel">
+
+        <div class="dev-section not-configured" id="dev-stripe">
+          <div class="dev-section-title">💳 Stripe — Paiement en ligne</div>
+          <div class="dev-section-sub">Configurez vos clés Stripe pour activer les paiements.</div>
+          <span class="dev-status ko" id="stripe-status">Non configuré</span>
+          <div class="form-grid">
+            <div class="form-group"><label>Clé secrète (sk_live_ ou sk_test_)</label><input type="password" id="dev-stripe_secret_key" placeholder="sk_live_..."></div>
+            <div class="form-group"><label>Clé publique (pk_live_ ou pk_test_)</label><input type="text" id="dev-stripe_public_key" placeholder="pk_live_..."></div>
+            <div class="form-group form-full"><label>Webhook Secret (whsec_...)</label><input type="password" id="dev-stripe_webhook_secret" placeholder="whsec_..."><small style="color:var(--text-muted);font-size:11px;margin-top:4px;">Stripe → Développeurs → Webhooks → endpoint: /api/stripe/webhook → événement: checkout.session.completed</small></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveDevConfig('stripe')" style="margin-top:16px;">Enregistrer Stripe</button>
+        </div>
+
+        <div class="dev-section not-configured" id="dev-gmail">
+          <div class="dev-section-title">📧 Gmail — Envoi d'emails</div>
+          <div class="dev-section-sub">Utilisez un mot de passe d'application Google (pas votre mot de passe principal).</div>
+          <span class="dev-status ko" id="gmail-status">Non configuré</span>
+          <div class="form-grid">
+            <div class="form-group"><label>Adresse Gmail</label><input type="email" id="dev-gmail_user" placeholder="votre@gmail.com"></div>
+            <div class="form-group"><label>Mot de passe d'application (16 caractères)</label><input type="password" id="dev-gmail_app_password" placeholder="xxxx xxxx xxxx xxxx"></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveDevConfig('gmail')" style="margin-top:16px;">Enregistrer Gmail</button>
+        </div>
+
+        <div style="background:white;padding:24px 32px;border-left:3px solid var(--accent);">
+          <div style="font-size:12px;color:var(--text-muted);line-height:2;">
+            <strong style="display:block;margin-bottom:8px;color:var(--primary);">📋 Checklist déploiement</strong>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Backend Render déployé + URL notée</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Variables d'env configurées sur Render</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Frontend Netlify déployé</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> <code>const API = '...'</code> remplacé dans tous les .html</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Clés Stripe configurées ici</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Webhook Stripe créé → /api/stripe/webhook</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Gmail configuré ici</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Paramètres du site personnalisés</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox"> Produits ajoutés</label>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL PRODUIT -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="productModalTitle">Nouveau produit</span>
+      <button class="modal-close" onclick="closeProductModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pm-id">
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Nom du produit *</label><input type="text" id="pm-name" placeholder="Veste en laine mérinos"></div>
+        <div class="form-group"><label>Catégorie</label><input type="text" id="pm-category" placeholder="Femme · Vestes"></div>
+        <div class="form-group"><label>Prix (€) *</label><input type="number" id="pm-price" placeholder="295" step="0.01"></div>
+        <div class="form-group"><label>Ancien prix (barré)</label><input type="number" id="pm-old_price" placeholder="390" step="0.01"></div>
+        <div class="form-group form-full"><label>Description</label><textarea id="pm-description" placeholder="Description du produit..."></textarea></div>
+        <div class="form-group form-full"><label>Matières</label><input type="text" id="pm-materials" placeholder="100% laine mérinos, fabriqué en Italie"></div>
+        <div class="form-group form-full"><label>Tailles disponibles (séparées par virgule)</label><input type="text" id="pm-sizes" placeholder="XS, S, M, L, XL"></div>
+        <div class="form-group form-full"><label>URL de l'image</label><input type="url" id="pm-image" placeholder="https://..." oninput="previewImg()">
+          <img id="pm-img-preview" class="img-preview" style="display:none;margin-top:8px;">
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;margin-top:20px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pm-is_new"> Nouveau</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pm-is_promo"> Promotion</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pm-in_collection" checked> Dans la collection</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="pm-active" checked> Actif</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeProductModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMMANDE -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">Commande</span>
+      <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div class="modal-body" id="orderModalBody"></div>
+    <div class="modal-footer" id="orderModalFooter"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://site-yasmina.onrender.com'; // ← REMPLACE PAR TON URL RENDER
+
+let token = localStorage.getItem('maison_admin_token');
+let currentUser = null;
+let allOrders = [], allProducts = [], allClients = [];
+
+// ══ INIT ══
+async function init() {
+  try {
+    const cfg = await apiFetch('/api/config', false);
+    const name = cfg.site_name || 'MAISON';
+    document.getElementById('loginLogo').textContent = name;
+    document.getElementById('sidebarLogo').textContent = name;
+    if (cfg.accent_color) document.documentElement.style.setProperty('--accent', cfg.accent_color);
+    if (cfg.primary_color) document.documentElement.style.setProperty('--primary', cfg.primary_color);
+  } catch {}
+
+  if (token) {
+    try {
+      currentUser = await apiFetch('/api/auth/me');
+      showApp();
+    } catch { token = null; localStorage.removeItem('maison_admin_token'); }
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const res = await apiFetch('/api/auth/login', false, 'POST', { email, password });
+    if (!['admin','super_admin','vendeur'].includes(res.user.role)) {
+      document.getElementById('loginErr').textContent = 'Accès réservé au personnel.';
+      return;
+    }
+    token = res.token;
+    localStorage.setItem('maison_admin_token', token);
+    currentUser = res.user;
+    showApp();
+  } catch(e) {
+    document.getElementById('loginErr').textContent = e.message;
+  }
+}
+
+function doLogout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('maison_admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('userInfo').innerHTML = `${currentUser.first_name || ''} ${currentUser.last_name || ''}<br><span style="color:var(--accent)">${currentUser.email}</span>`;
+  document.getElementById('sidebarRole').textContent = currentUser.role.replace('_',' ').toUpperCase();
+
+  // Afficher sections selon rôle
+  if (['admin','super_admin'].includes(currentUser.role)) {
+    document.getElementById('nav-staff').style.display = 'flex';
+  }
+  if (currentUser.role === 'super_admin') {
+    document.getElementById('nav-dev-title').style.display = 'block';
+    document.getElementById('nav-dev').style.display = 'flex';
+  }
+
+  loadDashboard();
+}
+
+// ══ NAVIGATION ══
+function goTo(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
+
+  const titles = { dashboard:'Vue d\'ensemble', orders:'Commandes', products:'Produits', clients:'Clients', siteconfig:'Paramètres du site', emails:'Emails', staff:'Équipe & Rôles', devpanel:'API & Clés' };
+  document.getElementById('pageTitle').textContent = titles[section] || section;
+
+  const actions = document.getElementById('topbarActions');
+  actions.innerHTML = '';
+  if (section === 'products') {
+    actions.innerHTML = '<button class="btn btn-primary" onclick="openProductModal()">+ Nouveau produit</button>';
+  }
+
+  if (section === 'orders') loadOrders();
+  else if (section === 'products') loadProducts();
+  else if (section === 'clients') loadClients();
+  else if (section === 'siteconfig') loadConfig();
+  else if (section === 'emails') loadEmailLog();
+  else if (section === 'staff') loadStaff();
+  else if (section === 'devpanel') loadDevConfig();
+}
+
+// ══ API ══
+async function apiFetch(path, withAuth = true, method = 'GET', body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (withAuth && token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erreur');
+  return data;
+}
+
+// ══ DASHBOARD ══
+async function loadDashboard() {
+  try {
+    const [orders, products] = await Promise.all([
+      apiFetch('/api/orders'),
+      apiFetch('/api/products'),
+    ]);
+    allOrders = orders;
+
+    const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s,o) => s + o.total, 0);
+    const pending = orders.filter(o => o.status === 'paid').length;
+
+    document.getElementById('stat-orders').textContent = orders.length;
+    document.getElementById('stat-revenue').textContent = `€ ${revenue.toFixed(0)}`;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-products').textContent = products.filter(p => p.active !== 0).length;
+
+    document.getElementById('recentOrders').innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);padding:0 0 12px;border-bottom:2px solid var(--mid);">N° Commande</th>
+          <th style="text-align:left;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);padding:0 0 12px;border-bottom:2px solid var(--mid);">Client</th>
+          <th style="text-align:left;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);padding:0 0 12px;border-bottom:2px solid var(--mid);">Total</th>
+          <th style="text-align:left;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);padding:0 0 12px;border-bottom:2px solid var(--mid);">Statut</th>
+        </tr></thead>
+        <tbody>
+          ${orders.slice(0,8).map(o => `
+            <tr style="cursor:pointer;" onclick="openOrderModal(${o.id})">
+              <td style="padding:12px 0;border-bottom:1px solid var(--mid);font-size:13px;">${o.order_number}</td>
+              <td style="padding:12px 0;border-bottom:1px solid var(--mid);font-size:13px;">${o.customer_name}</td>
+              <td style="padding:12px 0;border-bottom:1px solid var(--mid);font-size:13px;">€ ${parseFloat(o.total).toFixed(2)}</td>
+              <td style="padding:12px 0;border-bottom:1px solid var(--mid);">${statusBadge(o.status)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ ORDERS ══
+async function loadOrders() {
+  try {
+    allOrders = await apiFetch('/api/orders');
+    renderOrders(allOrders);
+  } catch(e) { toast(e.message, true); }
+}
+
+function filterOrders() {
+  const q = document.getElementById('orderSearch').value.toLowerCase();
+  const st = document.getElementById('orderStatusFilter').value;
+  const filtered = allOrders.filter(o =>
+    (!q || o.order_number.toLowerCase().includes(q) || o.customer_name.toLowerCase().includes(q) || o.customer_email.toLowerCase().includes(q)) &&
+    (!st || o.status === st)
+  );
+  renderOrders(filtered);
+}
+
+function renderOrders(orders) {
+  const tb = document.getElementById('ordersTable');
+  if (!orders.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Aucune commande</td></tr>';
+    return;
+  }
+  tb.innerHTML = orders.map(o => `
+    <tr style="cursor:pointer;" onclick="openOrderModal(${o.id})">
+      <td><strong>${o.order_number}</strong></td>
+      <td>${o.customer_name}<br><small style="color:var(--text-muted)">${o.customer_email}</small></td>
+      <td>€ ${parseFloat(o.total).toFixed(2)}</td>
+      <td>${o.delivery_type === 'retrait' ? '🏪 Boutique' : '🚚 Domicile'}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${new Date(o.created_at).toLocaleDateString('fr-FR')}</td>
+      <td>
+        <select class="filter-select" style="font-size:11px;padding:5px 8px;" onchange="changeOrderStatus(${o.id}, this.value)" onclick="event.stopPropagation()">
+          ${['pending','paid','ready','completed','cancelled'].map(s => `<option value="${s}"${o.status===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+async function changeOrderStatus(id, status) {
+  try {
+    await apiFetch(`/api/orders/${id}/status`, true, 'PUT', { status });
+    toast('Statut mis à jour');
+    loadOrders();
+  } catch(e) { toast(e.message, true); }
+}
+
+async function openOrderModal(id) {
+  const order = allOrders.find(o => o.id === id);
+  if (!order) return;
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+
+  document.getElementById('orderModalTitle').textContent = order.order_number;
+  document.getElementById('orderModalBody').innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">Client</div><div style="font-size:14px;">${order.customer_name}<br><small style="color:var(--text-muted)">${order.customer_email}</small>${order.customer_phone ? `<br><small style="color:var(--text-muted)">${order.customer_phone}</small>` : ''}</div></div>
+        <div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">Livraison</div><div style="font-size:14px;">${order.delivery_type === 'retrait' ? '🏪 Retrait en boutique' : `🚚 ${order.delivery_address}`}</div></div>
+        <div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">Date</div><div style="font-size:14px;">${new Date(order.created_at).toLocaleString('fr-FR')}</div></div>
+        <div><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">Statut</div>${statusBadge(order.status)}</div>
+      </div>
+      ${order.notes ? `<div style="background:var(--light);padding:14px 16px;font-size:13px;color:#555;margin-bottom:16px;border-left:2px solid var(--accent);">📝 ${order.notes}</div>` : ''}
+    </div>
+    <div class="order-items-list">
+      ${items.map(i => `<div class="order-item-row"><span>${i.name}${i.size ? ` <span style="color:var(--text-muted);font-size:12px;">(${i.size})</span>` : ''}</span><span>€ ${parseFloat(i.price).toFixed(2)}</span></div>`).join('')}
+      ${order.shipping > 0 ? `<div class="order-item-row" style="color:var(--text-muted)"><span>Livraison</span><span>€ ${parseFloat(order.shipping).toFixed(2)}</span></div>` : ''}
+      <div class="order-item-row" style="font-weight:600;"><span>Total</span><span>€ ${parseFloat(order.total).toFixed(2)}</span></div>
+    </div>
+    ${order.qr_code ? `<div style="text-align:center;padding:16px 0;"><img src="${order.qr_code}" style="width:140px;height:140px;"><p style="font-size:11px;color:var(--text-muted);margin-top:8px;letter-spacing:1px;">QR Code de retrait</p></div>` : ''}`;
+
+  document.getElementById('orderModalFooter').innerHTML = `<button class="btn btn-outline" onclick="closeOrderModal()">Fermer</button>`;
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
+
+// ══ PRODUCTS ══
+async function loadProducts() {
+  try {
+    allProducts = await apiFetch('/api/products/all');
+    renderProducts(allProducts);
+  } catch(e) { toast(e.message, true); }
+}
+
+function filterProducts() {
+  const q = document.getElementById('productSearch').value.toLowerCase();
+  renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)));
+}
+
+function renderProducts(products) {
+  const tb = document.getElementById('productsTable');
+  if (!products.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Aucun produit</td></tr>';
+    return;
+  }
+  tb.innerHTML = products.map(p => `
+    <tr>
+      <td>${p.image ? `<img src="${p.image}" class="img-preview">` : `<div class="img-preview-placeholder">—</div>`}</td>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:var(--text-muted);font-size:12px;">${p.category || '—'}</td>
+      <td>${p.old_price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:12px;">€ ${p.old_price}</span><br>` : ''}€ ${p.price}</td>
+      <td>${p.is_new ? '<span class="badge badge-new">Nouveau</span>' : ''}${p.is_promo ? '<span class="badge badge-promo" style="margin-left:4px;">Promo</span>' : ''}</td>
+      <td>${p.active ? '<span style="color:var(--success);font-size:12px;">● Actif</span>' : '<span style="color:var(--text-muted);font-size:12px;">○ Inactif</span>'}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})" style="margin-right:4px;">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Supprimer</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openProductModal(id = null) {
+  const p = id ? allProducts.find(x => x.id === id) : null;
+  document.getElementById('productModalTitle').textContent = p ? 'Modifier le produit' : 'Nouveau produit';
+  document.getElementById('pm-id').value = p?.id || '';
+  document.getElementById('pm-name').value = p?.name || '';
+  document.getElementById('pm-category').value = p?.category || '';
+  document.getElementById('pm-price').value = p?.price || '';
+  document.getElementById('pm-old_price').value = p?.old_price || '';
+  document.getElementById('pm-description').value = p?.description || '';
+  document.getElementById('pm-materials').value = p?.materials || '';
+  const sizes = p?.sizes ? (Array.isArray(p.sizes) ? p.sizes.join(', ') : p.sizes) : '';
+  document.getElementById('pm-sizes').value = sizes;
+  document.getElementById('pm-image').value = p?.image || '';
+  document.getElementById('pm-is_new').checked = !!p?.is_new;
+  document.getElementById('pm-is_promo').checked = !!p?.is_promo;
+  document.getElementById('pm-in_collection').checked = p ? !!p.in_collection : true;
+  document.getElementById('pm-active').checked = p ? !!p.active : true;
+  previewImg();
+  document.getElementById('productModal').classList.add('open');
+}
+
+function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
+
+function previewImg() {
+  const url = document.getElementById('pm-image').value;
+  const img = document.getElementById('pm-img-preview');
+  if (url) { img.src = url; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+}
+
+async function saveProduct() {
+  const id = document.getElementById('pm-id').value;
+  const sizesRaw = document.getElementById('pm-sizes').value;
+  const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const data = {
+    name: document.getElementById('pm-name').value,
+    category: document.getElementById('pm-category').value,
+    price: parseFloat(document.getElementById('pm-price').value),
+    old_price: parseFloat(document.getElementById('pm-old_price').value) || null,
+    description: document.getElementById('pm-description').value,
+    materials: document.getElementById('pm-materials').value,
+    sizes,
+    image: document.getElementById('pm-image').value,
+    is_new: document.getElementById('pm-is_new').checked,
+    is_promo: document.getElementById('pm-is_promo').checked,
+    in_collection: document.getElementById('pm-in_collection').checked,
+    active: document.getElementById('pm-active').checked,
+  };
+
+  if (!data.name || !data.price) return toast('Nom et prix requis', true);
+
+  try {
+    if (id) await apiFetch(`/api/products/${id}`, true, 'PUT', data);
+    else await apiFetch('/api/products', true, 'POST', data);
+    toast('Produit enregistré ✓');
+    closeProductModal();
+    loadProducts();
+  } catch(e) { toast(e.message, true); }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Supprimer ce produit ?')) return;
+  try {
+    await apiFetch(`/api/products/${id}`, true, 'DELETE');
+    toast('Produit supprimé');
+    loadProducts();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ CLIENTS ══
+async function loadClients() {
+  try {
+    allClients = await apiFetch('/api/users/clients');
+    const tb = document.getElementById('clientsTable');
+    if (!allClients.length) {
+      tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">Aucun client inscrit</td></tr>';
+      return;
+    }
+    tb.innerHTML = allClients.map(c => `
+      <tr>
+        <td>${c.first_name} ${c.last_name}</td>
+        <td>${c.email}</td>
+        <td>${c.phone || '—'}</td>
+        <td style="color:var(--text-muted);font-size:12px;">${new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ SITE CONFIG ══
+async function loadConfig() {
+  try {
+    const cfg = await apiFetch('/api/config', false);
+    for (const [k, v] of Object.entries(cfg)) {
+      const el = document.getElementById('cfg-' + k);
+      if (!el) continue;
+      if (el.type === 'checkbox') el.checked = v === '1';
+      else el.value = v;
+      // Sync color pickers
+      const picker = document.getElementById('cfg-' + k + '-picker');
+      if (picker && v.startsWith('#')) picker.value = v;
+    }
+  } catch(e) { toast(e.message, true); }
+}
+
+async function saveConfig() {
+  const data = {};
+  document.querySelectorAll('[id^="cfg-"]').forEach(el => {
+    if (el.id.endsWith('-picker')) return;
+    const key = el.id.replace('cfg-', '');
+    data[key] = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+  });
+  try {
+    await apiFetch('/api/config', true, 'PUT', data);
+    toast('Paramètres enregistrés ✓');
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ EMAILS ══
+async function loadEmailLog() {
+  try {
+    const logs = await apiFetch('/api/mail/log');
+    const el = document.getElementById('emailLog');
+    if (!logs.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Aucun email envoyé</p>'; return; }
+    el.innerHTML = logs.map(l => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--mid);">
+        <div style="font-size:12px;color:var(--primary);">${l.subject}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${l.to_email} · ${new Date(l.sent_at).toLocaleString('fr-FR')}</div>
+      </div>`).join('');
+  } catch {}
+}
+
+async function sendEmail() {
+  const to = document.getElementById('mail-to').value;
+  const subject = document.getElementById('mail-subject').value;
+  const message = document.getElementById('mail-body').value;
+  if (!to || !subject || !message) return toast('Tous les champs sont requis', true);
+  try {
+    await apiFetch('/api/mail/send', true, 'POST', { to, subject, message });
+    toast('Email envoyé ✓');
+    document.getElementById('mail-to').value = '';
+    document.getElementById('mail-subject').value = '';
+    document.getElementById('mail-body').value = '';
+    loadEmailLog();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ STAFF ══
+async function loadStaff() {
+  try {
+    const users = await apiFetch('/api/auth/users');
+    const tb = document.getElementById('staffTable');
+    tb.innerHTML = users.map(u => `
+      <tr>
+        <td>${u.first_name} ${u.last_name}</td>
+        <td>${u.email}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+        <td>${currentUser.role === 'super_admin' && u.id !== currentUser.id ? `
+          <select class="filter-select" style="font-size:11px;padding:5px 8px;" onchange="changeRole(${u.id}, this.value)">
+            ${['client','vendeur','admin','super_admin'].map(r => `<option value="${r}"${u.role===r?' selected':''}>${r}</option>`).join('')}
+          </select>` : '—'}
+        </td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message, true); }
+}
+
+async function changeRole(id, role) {
+  try {
+    await apiFetch(`/api/auth/users/${id}/role`, true, 'PUT', { role });
+    toast('Rôle mis à jour ✓');
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ DEV CONFIG ══
+async function loadDevConfig() {
+  try {
+    const cfg = await apiFetch('/api/config/dev');
+    const stripeOk = cfg['stripe_secret_key_set'] && cfg['stripe_webhook_secret_set'];
+    const gmailOk = cfg['gmail_user'] && cfg['gmail_app_password_set'];
+
+    document.getElementById('dev-stripe').className = 'dev-section ' + (stripeOk ? 'configured' : 'not-configured');
+    document.getElementById('stripe-status').className = 'dev-status ' + (stripeOk ? 'ok' : 'ko');
+    document.getElementById('stripe-status').textContent = stripeOk ? '✓ Configuré' : '✗ Non configuré';
+
+    document.getElementById('dev-gmail').className = 'dev-section ' + (gmailOk ? 'configured' : 'not-configured');
+    document.getElementById('gmail-status').className = 'dev-status ' + (gmailOk ? 'ok' : 'ko');
+    document.getElementById('gmail-status').textContent = gmailOk ? '✓ Configuré' : '✗ Non configuré';
+
+    if (cfg['gmail_user']) document.getElementById('dev-gmail_user').value = cfg['gmail_user'];
+  } catch(e) { toast(e.message, true); }
+}
+
+async function saveDevConfig(type) {
+  const data = {};
+  if (type === 'stripe') {
+    data.stripe_secret_key = document.getElementById('dev-stripe_secret_key').value;
+    data.stripe_public_key = document.getElementById('dev-stripe_public_key').value;
+    data.stripe_webhook_secret = document.getElementById('dev-stripe_webhook_secret').value;
+  } else {
+    data.gmail_user = document.getElementById('dev-gmail_user').value;
+    data.gmail_app_password = document.getElementById('dev-gmail_app_password').value;
+  }
+  try {
+    await apiFetch('/api/config/dev', true, 'PUT', data);
+    toast('Configuration enregistrée ✓');
+    loadDevConfig();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ══ UTILS ══
+function statusBadge(s) {
+  const map = { pending:'badge-pending', paid:'badge-paid', ready:'badge-ready', completed:'badge-completed', cancelled:'badge-cancelled' };
+  const labels = { pending:'En attente', paid:'Payé', ready:'Prêt', completed:'Terminé', cancelled:'Annulé' };
+  return `<span class="badge ${map[s]||''}">${labels[s]||s}</span>`;
+}
+
+function roleBadge(r) {
+  const colors = { client:'#888', vendeur:'#1976d2', admin:'#7b1fa2', super_admin:'var(--accent)' };
+  return `<span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${colors[r]||'#888'}">${r}</span>`;
+}
+
+function toast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+init();
+</script>
+</body>
+</html>
